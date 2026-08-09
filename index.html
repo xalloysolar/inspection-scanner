@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>智慧巡檢 QR Scanner</title>
+
+  <script
+    src="https://unpkg.com/html5-qrcode"
+    type="text/javascript">
+  </script>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f3f6fa;
+      font-family:
+        Arial,
+        "Microsoft JhengHei",
+        sans-serif;
+      color: #25324a;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 480px;
+      margin: 30px auto;
+      padding: 24px;
+      background: white;
+      border-radius: 18px;
+      text-align: center;
+    }
+
+    .title {
+      font-size: 28px;
+      font-weight: 900;
+      margin-bottom: 20px;
+    }
+
+    .device {
+      margin-bottom: 20px;
+      font-size: 22px;
+      font-weight: 900;
+      color: #1565c0;
+    }
+
+    #reader {
+      width: 100%;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 16px;
+      background: #f7f9fc;
+      border-radius: 12px;
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <div class="card">
+
+    <div class="title">
+      📷 掃描人員 QR Code
+    </div>
+
+    <div
+      id="device"
+      class="device">
+    </div>
+
+    <div id="reader"></div>
+
+    <div
+      id="result"
+      class="result">
+      請將人員 QR Code 對準鏡頭
+    </div>
+
+  </div>
+
+
+<script>
+
+//==================================================
+// 1. 取得網址中的 device
+//==================================================
+const params =
+  new URLSearchParams(
+    window.location.search
+  );
+
+const deviceID =
+  String(
+    params.get("device") || ""
+  )
+    .trim()
+    .toUpperCase();
+
+
+document.getElementById(
+  "device"
+).textContent =
+  "目前裝置：" +
+  (
+    deviceID ||
+    "未指定"
+  );
+
+
+//==================================================
+// 2. QR 掃描成功
+//==================================================
+function onScanSuccess(
+  decodedText
+) {
+
+  let personID = "";
+
+  try {
+
+    const url =
+      new URL(
+        decodedText
+      );
+
+    personID =
+      String(
+        url.searchParams.get(
+          "user"
+        ) || ""
+      )
+        .trim()
+        .toUpperCase();
+
+  } catch (error) {
+
+    personID =
+      String(
+        decodedText || ""
+      )
+        .trim()
+        .toUpperCase();
+
+  }
+
+
+  //================================================
+  // 3. 檢查是不是 PS 編碼
+  //================================================
+  if (
+    !/^PS\d+$/.test(
+      personID
+    )
+  ) {
+
+    document.getElementById(
+      "result"
+    ).innerHTML =
+      "❌ 不是有效的人員 QR Code";
+
+    return;
+  }
+
+
+  //================================================
+  // 4. 顯示結果
+  //================================================
+  document.getElementById(
+    "result"
+  ).innerHTML =
+    "✅ 掃描成功" +
+    "<br>" +
+    "裝置：" +
+    deviceID +
+    "<br>" +
+    "人員：" +
+    personID;
+
+
+  //================================================
+  // 5. 成功後停止掃描
+  //================================================
+  html5QrCodeScanner.clear();
+
+}
+
+
+//==================================================
+// QR 掃描失敗
+// 持續掃描即可
+//==================================================
+function onScanFailure(
+  error
+) {
+
+}
+
+
+//==================================================
+// 6. 建立掃描器
+//==================================================
+const html5QrCodeScanner =
+  new Html5QrcodeScanner(
+    "reader",
+    {
+      fps: 10,
+      qrbox: {
+        width: 250,
+        height: 250
+      }
+    },
+    false
+  );
+
+
+html5QrCodeScanner.render(
+  onScanSuccess,
+  onScanFailure
+);
+
+</script>
+
+</body>
+
+</html>
