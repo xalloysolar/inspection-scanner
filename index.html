@@ -7,15 +7,19 @@
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
   >
 
-  <title>智慧巡檢 QR Scanner</title>
+  <title>
+    智慧巡檢－人員掃描
+  </title>
+
 
   <script
     src="https://unpkg.com/html5-qrcode"
     type="text/javascript">
   </script>
+
 
   <style>
 
@@ -23,124 +27,583 @@
       box-sizing: border-box;
     }
 
+
     body {
+
       margin: 0;
-      padding: 20px;
-      background: #f3f6fa;
+
+      padding:
+        20px 18px 30px;
+
+      background:
+        #f3f6fa;
+
       font-family:
         Arial,
         "Microsoft JhengHei",
         sans-serif;
-      color: #25324a;
+
+      color:
+        #25324a;
     }
+
 
     .card {
+
       width: 100%;
+
       max-width: 480px;
-      margin: 30px auto;
-      padding: 24px;
-      background: white;
-      border-radius: 18px;
-      text-align: center;
+
+      margin:
+        20px auto;
+
+      padding:
+        24px 20px;
+
+      background:
+        #ffffff;
+
+      border-radius:
+        20px;
+
+      box-shadow:
+        0 8px 30px
+        rgba(
+          0,
+          0,
+          0,
+          0.10
+        );
+
+      text-align:
+        center;
     }
+
 
     .title {
-      font-size: 28px;
-      font-weight: 900;
-      margin-bottom: 20px;
+
+      margin-bottom:
+        18px;
+
+      font-size:
+        28px;
+
+      font-weight:
+        900;
     }
+
 
     .device {
-      margin-bottom: 20px;
-      font-size: 22px;
-      font-weight: 900;
-      color: #1565c0;
+
+      margin-bottom:
+        20px;
+
+      color:
+        #1565c0;
+
+      font-size:
+        23px;
+
+      font-weight:
+        900;
     }
+
+
+    .scannerWrap {
+
+      width: 100%;
+
+      overflow:
+        hidden;
+
+      border-radius:
+        16px;
+
+      background:
+        #000000;
+    }
+
 
     #reader {
-      width: 100%;
+
+      width:
+        100%;
     }
 
+
+    #reader video {
+
+      width:
+        100% !important;
+
+      border-radius:
+        16px;
+    }
+
+
     .result {
-      margin-top: 20px;
-      padding: 16px;
-      background: #f7f9fc;
-      border-radius: 12px;
-      font-size: 18px;
-      line-height: 1.8;
+
+      margin-top:
+        18px;
+
+      padding:
+        16px;
+
+      background:
+        #f7f9fc;
+
+      border-radius:
+        12px;
+
+      font-size:
+        18px;
+
+      line-height:
+        1.8;
+    }
+
+
+    .result.success {
+
+      background:
+        #ecfdf3;
+
+      color:
+        #16803c;
+
+      font-weight:
+        800;
+    }
+
+
+    .result.error {
+
+      background:
+        #fef3f2;
+
+      color:
+        #b42318;
+
+      font-weight:
+        800;
+    }
+
+
+    .hint {
+
+      margin-top:
+        14px;
+
+      color:
+        #667085;
+
+      font-size:
+        14px;
+
+      line-height:
+        1.7;
+    }
+
+
+    .loading {
+
+      display:
+        inline-block;
+
+      margin-right:
+        8px;
+    }
+
+
+    .retryButton {
+
+      display:
+        none;
+
+      width:
+        100%;
+
+      margin-top:
+        16px;
+
+      padding:
+        15px 18px;
+
+      border:
+        none;
+
+      border-radius:
+        12px;
+
+      background:
+        #1565c0;
+
+      color:
+        #ffffff;
+
+      font-size:
+        18px;
+
+      font-weight:
+        900;
+
+      cursor:
+        pointer;
+    }
+
+
+    .retryButton:active {
+
+      transform:
+        scale(0.98);
     }
 
   </style>
 
 </head>
 
+
 <body>
+
 
   <div class="card">
 
+
     <div class="title">
+
       📷 掃描人員 QR Code
+
     </div>
+
 
     <div
       id="device"
       class="device">
+
+      目前裝置：讀取中...
+
     </div>
 
-    <div id="reader"></div>
+
+    <div class="scannerWrap">
+
+      <div id="reader"></div>
+
+    </div>
+
 
     <div
       id="result"
       class="result">
-      請將人員 QR Code 對準鏡頭
+
+      <span class="loading">
+        ⏳
+      </span>
+
+      正在開啟後鏡頭...
+
     </div>
 
+
+    <button
+      id="retryButton"
+      class="retryButton"
+      type="button"
+      onclick="restartScanner()"
+    >
+
+      重新開啟掃描器
+
+    </button>
+
+
+    <div class="hint">
+
+      請將人員 QR Code
+      對準掃描框中央。<br>
+
+      本頁只允許即時相機掃描，
+      不提供圖片或相簿掃描。
+
+    </div>
+
+
   </div>
+
 
 
 <script>
 
 //==================================================
-// 1. 取得網址中的 device
+// Apps Script Web App
+//==================================================
+const WEB_APP_URL =
+  "https://script.google.com/macros/s/AKfycbx9ZurilzKvOXetrY_EJNZ5HDcx063AfG-mGRwu2DHjoltfowrGdFAigs93LD8JA4gZ/exec";
+
+
+//==================================================
+// 1. 讀取 Device
 //==================================================
 const params =
   new URLSearchParams(
     window.location.search
   );
 
+
 const deviceID =
   String(
-    params.get("device") || ""
+    params.get(
+      "device"
+    ) || ""
   )
     .trim()
     .toUpperCase();
 
 
-document.getElementById(
-  "device"
-).textContent =
-  "目前裝置：" +
-  (
-    deviceID ||
-    "未指定"
+const deviceBox =
+  document.getElementById(
+    "device"
   );
 
 
+const resultBox =
+  document.getElementById(
+    "result"
+  );
+
+
+const retryButton =
+  document.getElementById(
+    "retryButton"
+  );
+
+
+if (deviceID) {
+
+  deviceBox.textContent =
+    "目前裝置：" +
+    deviceID;
+
+} else {
+
+  deviceBox.textContent =
+    "目前裝置：未指定";
+}
+
+
 //==================================================
-// 2. QR 掃描成功
+// 2. 沒有 Device 時禁止繼續
 //==================================================
-function onScanSuccess(
+if (!deviceID) {
+
+  resultBox.className =
+    "result error";
+
+  resultBox.textContent =
+    "❌ 找不到裝置編碼，請從公務機專屬入口重新進入。";
+
+}
+
+
+//==================================================
+// QR Scanner
+//==================================================
+let html5QrCode =
+  null;
+
+
+let scanning =
+  false;
+
+
+let processing =
+  false;
+
+
+//==================================================
+// 3. 開啟掃描器
+//==================================================
+async function startScanner() {
+
+  if (!deviceID) {
+    return;
+  }
+
+
+  processing =
+    false;
+
+
+  retryButton.style.display =
+    "none";
+
+
+  resultBox.className =
+    "result";
+
+
+  resultBox.innerHTML =
+    "⏳ 正在開啟後鏡頭...";
+
+
+  try {
+
+    html5QrCode =
+      new Html5Qrcode(
+        "reader",
+        {
+          verbose: false
+        }
+      );
+
+
+    scanning =
+      true;
+
+
+    //================================================
+    // 直接要求後鏡頭
+    // 不顯示相機選單
+    //================================================
+    await html5QrCode.start(
+
+      {
+        facingMode:
+          "environment"
+      },
+
+      {
+        // 掃描頻率提高
+        fps: 20,
+
+        // 掃描框依畫面動態放大
+        qrbox:
+          function(
+            viewfinderWidth,
+            viewfinderHeight
+          ) {
+
+            const minEdge =
+              Math.min(
+                viewfinderWidth,
+                viewfinderHeight
+              );
+
+
+            const size =
+              Math.floor(
+                minEdge *
+                0.78
+              );
+
+
+            return {
+
+              width:
+                size,
+
+              height:
+                size
+
+            };
+          },
+
+        // 後鏡頭不需要鏡像辨識
+        disableFlip:
+          true,
+
+        // 4:3 對 iPhone 後鏡頭較自然
+        aspectRatio:
+          1.333333
+
+      },
+
+      onScanSuccess,
+
+      onScanFailure
+
+    );
+
+
+    resultBox.className =
+      "result";
+
+
+    resultBox.textContent =
+      "請將人員 QR Code 對準掃描框中央";
+
+
+  } catch (error) {
+
+    console.error(
+      "開啟掃描器失敗：",
+      error
+    );
+
+
+    scanning =
+      false;
+
+
+    resultBox.className =
+      "result error";
+
+
+    resultBox.textContent =
+      "❌ 無法開啟相機：" +
+      (
+        error &&
+        error.message
+          ? error.message
+          : String(error)
+      );
+
+
+    retryButton.style.display =
+      "block";
+  }
+}
+
+
+//==================================================
+// 4. 掃描成功
+//==================================================
+async function onScanSuccess(
   decodedText
 ) {
 
-  let personID = "";
+  if (processing) {
+    return;
+  }
 
+
+  processing =
+    true;
+
+
+  const rawValue =
+    String(
+      decodedText || ""
+    )
+      .trim();
+
+
+  let personID =
+    "";
+
+
+  //================================================
+  // QR 是完整網址
+  // 例如：
+  // .../exec?user=PS0015
+  //================================================
   try {
 
     const url =
       new URL(
-        decodedText
+        rawValue
       );
+
 
     personID =
       String(
@@ -151,11 +614,15 @@ function onScanSuccess(
         .trim()
         .toUpperCase();
 
+
   } catch (error) {
 
+    //==============================================
+    // 如果 QR 內容直接就是 PS0015
+    //==============================================
     personID =
       String(
-        decodedText || ""
+        rawValue || ""
       )
         .trim()
         .toUpperCase();
@@ -164,7 +631,7 @@ function onScanSuccess(
 
 
   //================================================
-  // 3. 檢查是不是 PS 編碼
+  // 5. 只接受人員 PS 編碼
   //================================================
   if (
     !/^PS\d+$/.test(
@@ -172,78 +639,106 @@ function onScanSuccess(
     )
   ) {
 
-    document.getElementById(
-      "result"
-    ).innerHTML =
-      "❌ 不是有效的人員 QR Code";
+    processing =
+      false;
+
+
+    resultBox.className =
+      "result error";
+
+
+    resultBox.innerHTML =
+      "❌ 這不是有效的人員 QR Code<br>" +
+      "請重新掃描";
+
 
     return;
   }
 
 
-//================================================
-// 4. 顯示結果
-//================================================
-document.getElementById(
-  "result"
-).innerHTML =
-  "✅ 掃描成功" +
-  "<br>" +
-  "裝置：" +
-  deviceID +
-  "<br>" +
-  "人員：" +
-  personID +
-  "<br><br>" +
-  "正在登入人員...";
+  //================================================
+  // 6. 停止相機
+  //================================================
+  try {
+
+    if (
+      html5QrCode &&
+      scanning
+    ) {
+
+      scanning =
+        false;
 
 
-//================================================
-// 5. 停止掃描
-//================================================
-html5QrCodeScanner.clear();
+      await html5QrCode.stop();
+
+    }
+
+  } catch (error) {
+
+    console.log(
+      "停止相機：",
+      error
+    );
+  }
 
 
-//================================================
-// 6. Apps Script Web App 網址
-//================================================
-const webAppUrl =
-  "https://script.google.com/macros/s/AKfycbx9ZurilzKvOXetrY_EJNZ5HDcx063AfG-mGRwu2DHjoltfowrGdFAigs93LD8JA4gZ/exec";
+  //================================================
+  // 7. 顯示掃描結果
+  //================================================
+  resultBox.className =
+    "result success";
 
 
-//================================================
-// 7. 將 Device + Person 一起送回 Apps Script
-//================================================
-const targetUrl =
-  webAppUrl +
-  "?user=" +
-  encodeURIComponent(
-    personID
-  ) +
-  "&device=" +
-  encodeURIComponent(
-    deviceID
+  resultBox.innerHTML =
+    "✅ 人員 QR Code 掃描成功" +
+    "<br>" +
+    "裝置：" +
+    deviceID +
+    "<br>" +
+    "人員：" +
+    personID +
+    "<br><br>" +
+    "正在進行人員登入...";
+
+
+  //================================================
+  // 8. 回 Apps Script
+  //
+  // 例如：
+  // ?user=PS0015&device=DV0005
+  //================================================
+  const targetUrl =
+    WEB_APP_URL +
+    "?user=" +
+    encodeURIComponent(
+      personID
+    ) +
+    "&device=" +
+    encodeURIComponent(
+      deviceID
+    );
+
+
+  //================================================
+  // 9. 自動前往 Apps Script
+  //================================================
+  setTimeout(
+    function() {
+
+      window.location.href =
+        targetUrl;
+
+    },
+    500
   );
-
-
-//================================================
-// 8. 稍微停留一下，再前往 Apps Script
-//================================================
-setTimeout(
-  function() {
-
-    window.location.href =
-      targetUrl;
-
-  },
-  800
-);
-
 }
 
 
 //==================================================
-// QR 掃描失敗
+// 10. 掃描過程中的失敗
+//
+// 不顯示錯誤
 // 持續掃描即可
 //==================================================
 function onScanFailure(
@@ -254,28 +749,62 @@ function onScanFailure(
 
 
 //==================================================
-// 6. 建立掃描器
+// 11. 重新啟動掃描器
 //==================================================
-const html5QrCodeScanner =
-  new Html5QrcodeScanner(
-    "reader",
-    {
-      fps: 10,
-      qrbox: {
-        width: 250,
-        height: 250
-      }
-    },
-    false
-  );
+async function restartScanner() {
+
+  try {
+
+    if (
+      html5QrCode &&
+      scanning
+    ) {
+
+      await html5QrCode.stop();
+
+    }
+
+  } catch (error) {
+
+  }
 
 
-html5QrCodeScanner.render(
-  onScanSuccess,
-  onScanFailure
+  scanning =
+    false;
+
+
+  processing =
+    false;
+
+
+  document.getElementById(
+    "reader"
+  ).innerHTML =
+    "";
+
+
+  startScanner();
+}
+
+
+//==================================================
+// 12. 頁面載入後直接啟動
+//==================================================
+window.addEventListener(
+  "load",
+  function() {
+
+    if (deviceID) {
+
+      startScanner();
+
+    }
+
+  }
 );
 
 </script>
+
 
 </body>
 
