@@ -702,22 +702,22 @@ async function onScanSuccess(
     "正在進行人員登入...";
 
 
-//==================================================
-// 8. 回 Apps Script
-//
-// 例如：
-// ?user=PS0015&device=DV0005
-//==================================================
-const targetUrl =
-  WEB_APP_URL +
-  "?user=" +
-  encodeURIComponent(
-    personID
-  ) +
-  "&device=" +
-  encodeURIComponent(
-    deviceID
-  );
+  //================================================
+  // 8. 回 Apps Script
+  //
+  // 例如：
+  // ?user=PS0015&device=DV0005
+  //================================================
+  const targetUrl =
+    WEB_APP_URL +
+    "?user=" +
+    encodeURIComponent(
+      personID
+    ) +
+    "&device=" +
+    encodeURIComponent(
+      deviceID
+    );
 
 
   //================================================
