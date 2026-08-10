@@ -342,7 +342,7 @@ const WEB_APP_URL =
 
 
 //==================================================
-// 1. 讀取 Device
+// 1. 讀取 Device / Identify
 //==================================================
 const params =
   new URLSearchParams(
@@ -350,14 +350,79 @@ const params =
   );
 
 
+//==================================================
+// DeviceID
+//==================================================
 const deviceID =
   String(
-    params.get(
-      "device"
-    ) || ""
+    params.get("device") || ""
   )
     .trim()
     .toUpperCase();
+
+
+//==================================================
+// DeviceIdentify
+//
+// 優先順序：
+// 1. 網址 identify
+// 2. DEVICE_IDENTIFY
+// 3. deviceIdentify
+//==================================================
+const deviceIdentify =
+  String(
+    params.get("identify") ||
+    localStorage.getItem("DEVICE_IDENTIFY") ||
+    localStorage.getItem("deviceIdentify") ||
+    ""
+  )
+    .trim()
+    .toUpperCase();
+
+
+const deviceBox =
+  document.getElementById(
+    "device"
+  );
+
+
+const resultBox =
+  document.getElementById(
+    "result"
+  );
+
+
+const retryButton =
+  document.getElementById(
+    "retryButton"
+  );
+
+
+if (deviceID) {
+
+  deviceBox.textContent =
+    "目前裝置：" +
+    deviceID;
+
+} else {
+
+  deviceBox.textContent =
+    "目前裝置：未指定";
+}
+
+
+//==================================================
+// 除錯
+//==================================================
+console.log(
+  "【人員掃描頁】deviceID =",
+  deviceID
+);
+
+console.log(
+  "【人員掃描頁】deviceIdentify =",
+  deviceIdentify
+);
 
 
 const deviceBox =
@@ -702,22 +767,46 @@ async function onScanSuccess(
     "正在進行人員登入...";
 
 
-  //================================================
-  // 8. 回 Apps Script
-  //
-  // 例如：
-  // ?user=PS0015&device=DV0005
-  //================================================
-  const targetUrl =
-    WEB_APP_URL +
-    "?user=" +
-    encodeURIComponent(
-      personID
-    ) +
-    "&device=" +
-    encodeURIComponent(
-      deviceID
-    );
+//==================================================
+// 8. 回 Apps Script
+//
+// user     = 人員編碼
+// device   = 裝置編碼
+// identify = 裝置識別碼
+//
+// 例如：
+// ?user=PS0001&device=DV0005&identify=XXXXX
+//==================================================
+const targetUrl =
+  WEB_APP_URL +
+  "?user=" +
+  encodeURIComponent(
+    personID
+  ) +
+  "&device=" +
+  encodeURIComponent(
+    deviceID
+  ) +
+  "&identify=" +
+  encodeURIComponent(
+    deviceIdentify
+  );
+
+
+console.log(
+  "【準備登入】personID =",
+  personID
+);
+
+console.log(
+  "【準備登入】deviceID =",
+  deviceID
+);
+
+console.log(
+  "【準備登入】deviceIdentify =",
+  deviceIdentify
+);
 
 
   //================================================
