@@ -338,7 +338,7 @@
 // Apps Script Web App
 //==================================================
 const WEB_APP_URL =
-  "https://script.google.com/macros/s/AKfycbx9ZurilzKvOXetrY_EJNZ5HDcx063AfG-mGRwu2DHjoltfowrGdFAigs93LD8JA4gZ/exec";
+  "https://script.google.com/macros/s/AKfycbxZDWATiVtMdSjL775rfvRIP6fJbpwXg6yLGhdVbJMOhUqbozZfg353d1NtGt9lZPCnww/exec";
 
 //==================================================
 // 1. 讀取 Device
@@ -458,9 +458,7 @@ async function startScanner() {
         formatsToSupport: [
           Html5QrcodeSupportedFormats.QR_CODE
         ],
-  
-        // 瀏覽器支援時使用原生 BarcodeDetector
-        useBarCodeDetectorIfSupported: true
+
       }
     );
 
@@ -512,7 +510,7 @@ async function startScanner() {
         disableFlip: true,
       
         aspectRatio: 1.333333
-      }
+      },
        
 
       onScanSuccess,
