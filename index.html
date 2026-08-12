@@ -448,12 +448,21 @@ async function startScanner() {
   try {
 
     html5QrCode =
-      new Html5Qrcode(
-        "reader",
-        {
-          verbose: false
-        }
-      );
+    new Html5Qrcode(
+      "reader",
+      {
+        verbose: false,
+  
+        // 只辨識 QR Code
+        // 不掃其他 Barcode 格式
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.QR_CODE
+        ],
+  
+        // 瀏覽器支援時使用原生 BarcodeDetector
+        useBarCodeDetectorIfSupported: true
+      }
+    );
 
 
     scanning =
@@ -472,50 +481,39 @@ async function startScanner() {
       },
 
       {
-        // 掃描頻率提高
-        fps: 20,
-
-        // 掃描框依畫面動態放大
+        // 提高掃描頻率
+        fps: 30,
+      
+        // 掃描框縮小
+        // 避免一次吃到旁邊其他 QR Code
         qrbox:
           function(
             viewfinderWidth,
             viewfinderHeight
           ) {
-
+      
             const minEdge =
               Math.min(
                 viewfinderWidth,
                 viewfinderHeight
               );
-
-
+      
             const size =
               Math.floor(
-                minEdge *
-                0.78
+                minEdge * 0.58
               );
-
-
+      
             return {
-
-              width:
-                size,
-
-              height:
-                size
-
+              width: size,
+              height: size
             };
           },
-
-        // 後鏡頭不需要鏡像辨識
-        disableFlip:
-          true,
-
-        // 4:3 對 iPhone 後鏡頭較自然
-        aspectRatio:
-          1.333333
-
-      },
+      
+        disableFlip: true,
+      
+        aspectRatio: 1.333333
+      }
+       
 
       onScanSuccess,
 
