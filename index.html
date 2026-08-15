@@ -128,6 +128,79 @@
       font-weight: 800;
     }
 
+
+    /*==================================================
+      站點掃描紀錄：登入有效時間內持續往下新增
+    ==================================================*/
+    .scanHistory {
+      margin-top: 16px;
+      display: none;
+      text-align: left;
+    }
+
+    .scanHistory.show {
+      display: block;
+    }
+
+    .scanHistoryTitle {
+      margin-bottom: 10px;
+      font-size: 17px;
+      font-weight: 900;
+      color: #344054;
+      text-align: center;
+    }
+
+    .scanHistoryList {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .scanHistoryItem {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 13px 14px;
+      border-radius: 14px;
+      background: #ecfdf3;
+      border: 1px solid #d1fadf;
+      box-shadow: 0 2px 8px rgba(16, 24, 40, 0.06);
+    }
+
+    .scanHistoryIcon {
+      flex: 0 0 auto;
+      font-size: 27px;
+      line-height: 1;
+      margin-top: 2px;
+    }
+
+    .scanHistoryContent {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .scanHistoryMain {
+      color: #16803c;
+      font-size: 17px;
+      line-height: 1.55;
+      font-weight: 900;
+      word-break: break-word;
+    }
+
+    .scanHistorySub {
+      margin-top: 3px;
+      color: #667085;
+      font-size: 14px;
+      line-height: 1.45;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .scanHistoryCount {
+      color: #2563eb;
+      font-weight: 900;
+    }
+
     .hint {
       margin-top: 14px;
       color: #667085;
@@ -195,6 +268,26 @@
       class="result"
     >
       ⏳ 正在開啟後鏡頭...
+    </div>
+
+
+    <!-- 登入有效時間內，成功掃描的站點會一直往下累加 -->
+    <div
+      id="scanHistory"
+      class="scanHistory"
+    >
+      <div class="scanHistoryTitle">
+        📋 本次登入站點掃描紀錄
+        <span
+          id="scanHistoryCount"
+          class="scanHistoryCount"
+        >0</span>
+      </div>
+
+      <div
+        id="scanHistoryList"
+        class="scanHistoryList"
+      ></div>
     </div>
 
     <button
@@ -268,6 +361,16 @@ const countdown =
   document.getElementById("countdown");
 
 
+
+const scanHistory =
+  document.getElementById("scanHistory");
+
+const scanHistoryList =
+  document.getElementById("scanHistoryList");
+
+const scanHistoryCount =
+  document.getElementById("scanHistoryCount");
+
 //==================================================
 // 3. 狀態變數
 //==================================================
@@ -283,6 +386,10 @@ let currentPersonID = "";
 let currentPersonName = "";
 let sessionExpireTime = null;
 let countdownTimer = null;
+
+
+// 本次登入成功掃描的站點紀錄
+let scannedSiteCount = 0;
 
 // 防止鏡頭一直對著同一張 QR Code 時重複送出
 let lastDecodedText = "";
@@ -596,18 +703,6 @@ async function onScanSuccess(
 
 //==================================================
 // 8. 人員 QR Code
-//
-// 規則：
-// 1. 公務機無登入者
-//    → 建立新 Session
-//
-// 2. 同一人重複掃描
-//    → 使用既有 Session
-//
-// 3. 不同人掃描，但公務機已有登入者
-//    → 不更換人員
-//    → 直接載入目前登入者
-//    → 切換到站點掃描
 //==================================================
 async function handlePersonScan(
   rawValue
@@ -620,10 +715,6 @@ async function handlePersonScan(
       /^PS\d+$/
     );
 
-
-  //================================================
-  // 1. 檢查人員 QR Code
-  //================================================
   if (!personID) {
 
     resultBox.className =
@@ -636,10 +727,6 @@ async function handlePersonScan(
     return;
   }
 
-
-  //================================================
-  // 2. 防止重複處理
-  //================================================
   processing = true;
 
   resultBox.className =
@@ -648,14 +735,10 @@ async function handlePersonScan(
   resultBox.innerHTML =
     "⏳ 已掃描人員：" +
     escapeHtml(personID) +
-    "<br>正在確認公務機登入狀態...";
-
+    "<br>正在建立登入 Session...";
 
   try {
 
-    //================================================
-    // 3. 呼叫 Apps Script LOGIN
-    //================================================
     const result =
       await jsonpRequest(
         {
@@ -666,118 +749,37 @@ async function handlePersonScan(
         15000
       );
 
-
-    if (!result) {
-
-      throw new Error(
-        "Apps Script 沒有回傳資料"
-      );
-    }
-
-
-    //================================================
-    // 4. 判斷要使用哪一位登入者
-    //
-    // A. success = true
-    //    → 新登入成功 / 同一人已登入
-    //
-    // B. success = false
-    //    但有 currentPersonID
-    //    → 此公務機目前已有其他登入者
-    //    → 不更換，直接使用目前登入者
-    //================================================
-    let activePersonID = "";
-    let activePersonName = "";
-    let activeExpireTime = "";
-
-
-    //================================================
-    // 4-1. 正常登入成功
-    //================================================
-    if (result.success === true) {
-
-      activePersonID =
-        String(
-          result.personID ||
-          personID
-        )
-          .trim()
-          .toUpperCase();
-
-      activePersonName =
-        String(
-          result.personName || ""
-        )
-          .trim();
-
-      activeExpireTime =
-        result.expireTime || "";
-    }
-
-
-    //================================================
-    // 4-2. 公務機已有其他登入者
-    //================================================
-    else if (
-      result.currentPersonID
+    if (
+      !result ||
+      result.success !== true
     ) {
 
-      activePersonID =
-        String(
-          result.currentPersonID
-        )
-          .trim()
-          .toUpperCase();
-
-      activePersonName =
-        String(
-          result.currentPersonName || ""
-        )
-          .trim();
-
-      activeExpireTime =
-        result.expireTime || "";
-    }
-
-
-    //================================================
-    // 4-3. 真正登入失敗
-    //================================================
-    else {
-
       throw new Error(
-        result.message ||
-        "建立人員登入失敗"
+        result && result.message
+          ? result.message
+          : "建立人員登入失敗"
       );
     }
 
-
-    //================================================
-    // 5. 寫入目前有效登入者
-    //================================================
     currentPersonID =
-      activePersonID;
+      String(
+        result.personID || personID
+      )
+        .trim()
+        .toUpperCase();
 
     currentPersonName =
-      activePersonName;
+      String(
+        result.personName || ""
+      ).trim();
 
-
-    //================================================
-    // 6. 解析 Session 到期時間
-    //================================================
     sessionExpireTime =
-      activeExpireTime
-        ? new Date(
-            activeExpireTime
-          )
+      result.expireTime
+        ? new Date(result.expireTime)
         : null;
 
-
-    //================================================
-    // 7. 儲存 GitHub 本機狀態
-    //================================================
+    // 同一個 GitHub 網域保存目前狀態
     try {
-
       localStorage.setItem(
         "currentDeviceID",
         deviceID
@@ -795,63 +797,20 @@ async function handlePersonScan(
 
       localStorage.setItem(
         "sessionExpireTime",
-        activeExpireTime
+        result.expireTime || ""
       );
-
     } catch (error) {
-
       console.warn(
         "localStorage 寫入失敗",
         error
       );
     }
 
-
-    //================================================
-    // 8. 切換站點掃描模式
-    //================================================
-    scanMode =
-      "SITE";
-
-    processing =
-      false;
+    scanMode = "SITE";
+    processing = false;
 
     showSiteScanMode();
-
     startCountdown();
-
-
-    //================================================
-    // 9. 如果剛才掃描的是不同人
-    //    額外提示目前真正登入者
-    //================================================
-    if (
-      result.success !== true &&
-      result.currentPersonID
-    ) {
-
-      resultBox.className =
-        "result success";
-
-      resultBox.innerHTML =
-        "⚠️ 此公務機已有登入人員" +
-        "<br><br>" +
-        "✅ 目前登入：" +
-        escapeHtml(
-          currentPersonID
-        ) +
-        (
-          currentPersonName
-            ? "｜" +
-              escapeHtml(
-                currentPersonName
-              )
-            : ""
-        ) +
-        "<br><br>" +
-        "📍 已切換為站點掃描模式";
-    }
-
 
   } catch (error) {
 
@@ -860,11 +819,8 @@ async function handlePersonScan(
       error
     );
 
-    processing =
-      false;
-
-    scanMode =
-      "PERSON";
+    processing = false;
+    scanMode = "PERSON";
 
     resultBox.className =
       "result error";
@@ -872,8 +828,7 @@ async function handlePersonScan(
     resultBox.textContent =
       "❌ 人員登入失敗：" +
       (
-        error &&
-        error.message
+        error && error.message
           ? error.message
           : String(error)
       );
@@ -883,16 +838,26 @@ async function handlePersonScan(
 
 //==================================================
 // 9. 站點 QR Code
+//
+// 登入有效時間內：
+// 每成功掃描一個站點，就在下方新增一筆紀錄。
+// 不覆蓋前一筆，可持續掃描下一站。
 //==================================================
 async function handleSiteScan(
   rawValue
 ) {
 
+  //================================================
+  // 1. 必須有有效登入人員
+  //================================================
   if (!currentPersonID) {
     expireCurrentSession();
     return;
   }
 
+  //================================================
+  // 2. Session 到期就停止站點掃描
+  //================================================
   if (
     sessionExpireTime &&
     !isNaN(sessionExpireTime.getTime()) &&
@@ -902,6 +867,10 @@ async function handleSiteScan(
     return;
   }
 
+
+  //================================================
+  // 3. 解析站點 QR Code
+  //================================================
   const siteID =
     extractCodeFromQr(
       rawValue,
@@ -921,6 +890,10 @@ async function handleSiteScan(
     return;
   }
 
+
+  //================================================
+  // 4. 暫停接受下一筆，避免同一 QR Code 重複寫入
+  //================================================
   processing = true;
 
   resultBox.className =
@@ -931,8 +904,12 @@ async function handleSiteScan(
     escapeHtml(siteID) +
     "<br>正在更新巡檢資料...";
 
+
   try {
 
+    //================================================
+    // 5. 呼叫 Apps Script 更新站點
+    //================================================
     const result =
       await jsonpRequest(
         {
@@ -945,10 +922,12 @@ async function handleSiteScan(
         15000
       );
 
+
     if (
       !result ||
       result.success !== true
     ) {
+
       throw new Error(
         result && result.message
           ? result.message
@@ -956,6 +935,26 @@ async function handleSiteScan(
       );
     }
 
+
+    //================================================
+    // 6. 成功後新增一筆到「本次登入掃描紀錄」
+    //
+    // 不清除舊紀錄，所以會：
+    // 📋 ST0001
+    // 📋 ST0002
+    // 📋 ST0003
+    // ...
+    // 一直往下累加
+    //================================================
+    appendSiteHistory(
+      siteID,
+      result
+    );
+
+
+    //================================================
+    // 7. 顯示本次完成訊息
+    //================================================
     resultBox.className =
       "result success";
 
@@ -969,20 +968,19 @@ async function handleSiteScan(
             escapeHtml(result.siteName)
           : ""
       ) +
-      (
-        result.message
-          ? "<br>" +
-            escapeHtml(result.message)
-          : ""
-      ) +
       "<br><br>📷 相機保持開啟，可繼續掃描下一個站點";
 
-    // 讓相機繼續掃描下一站
+
+    //================================================
+    // 8. 很快恢復掃描下一站
+    //================================================
     setTimeout(
       function() {
+
         processing = false;
 
         if (scanMode === "SITE") {
+
           resultBox.className =
             "result";
 
@@ -990,8 +988,9 @@ async function handleSiteScan(
             "📍 請掃描下一個站點 QR Code";
         }
       },
-      1500
+      700
     );
+
 
   } catch (error) {
 
@@ -1012,6 +1011,156 @@ async function handleSiteScan(
           ? error.message
           : String(error)
       );
+  }
+}
+
+
+//==================================================
+// 9-1. 新增一筆站點掃描紀錄
+//
+// 顯示方式：
+// 📋 ST0001｜站點名稱
+//    00:25:36
+//
+// 每成功一筆，就 append 到最下方。
+//==================================================
+function appendSiteHistory(
+  siteID,
+  result
+) {
+
+  scannedSiteCount += 1;
+
+  scanHistory.classList.add(
+    "show"
+  );
+
+  scanHistoryCount.textContent =
+    String(
+      scannedSiteCount
+    );
+
+
+  const item =
+    document.createElement(
+      "div"
+    );
+
+  item.className =
+    "scanHistoryItem";
+
+
+  const icon =
+    document.createElement(
+      "div"
+    );
+
+  icon.className =
+    "scanHistoryIcon";
+
+  icon.textContent =
+    "📋";
+
+
+  const content =
+    document.createElement(
+      "div"
+    );
+
+  content.className =
+    "scanHistoryContent";
+
+
+  const siteName =
+    String(
+      result &&
+      result.siteName
+        ? result.siteName
+        : ""
+    ).trim();
+
+
+  const now =
+    new Date();
+
+  const timeText =
+    String(
+      now.getHours()
+    ).padStart(2, "0") +
+    ":" +
+    String(
+      now.getMinutes()
+    ).padStart(2, "0") +
+    ":" +
+    String(
+      now.getSeconds()
+    ).padStart(2, "0");
+
+
+  const main =
+    document.createElement(
+      "div"
+    );
+
+  main.className =
+    "scanHistoryMain";
+
+  main.textContent =
+    siteID +
+    (
+      siteName
+        ? "｜" + siteName
+        : ""
+    );
+
+
+  const sub =
+    document.createElement(
+      "div"
+    );
+
+  sub.className =
+    "scanHistorySub";
+
+  sub.textContent =
+    "掃描時間：" +
+    timeText +
+    "　｜　人員：" +
+    currentPersonID;
+
+
+  content.appendChild(
+    main
+  );
+
+  content.appendChild(
+    sub
+  );
+
+  item.appendChild(
+    icon
+  );
+
+  item.appendChild(
+    content
+  );
+
+  scanHistoryList.appendChild(
+    item
+  );
+
+
+  // 最新一筆自動捲到可見位置
+  try {
+
+    item.scrollIntoView(
+      {
+        behavior: "smooth",
+        block: "nearest"
+      }
+    );
+
+  } catch (error) {
   }
 }
 
@@ -1219,6 +1368,25 @@ function expireCurrentSession() {
   currentPersonName = "";
   sessionExpireTime = null;
   processing = false;
+
+  // 清除本次登入的畫面掃描紀錄
+  scannedSiteCount = 0;
+
+  if (scanHistoryCount) {
+    scanHistoryCount.textContent =
+      "0";
+  }
+
+  if (scanHistoryList) {
+    scanHistoryList.innerHTML =
+      "";
+  }
+
+  if (scanHistory) {
+    scanHistory.classList.remove(
+      "show"
+    );
+  }
 
   try {
     localStorage.removeItem(
