@@ -1,308 +1,194 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-
 <head>
-
   <meta charset="UTF-8">
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1, viewport-fit=cover"
   >
 
-  <title>
-    智慧巡檢－人員掃描
-  </title>
-
+  <title>智慧巡檢－QR Code 掃描</title>
 
   <script
     src="https://unpkg.com/html5-qrcode"
     type="text/javascript">
   </script>
 
-
   <style>
-
     * {
       box-sizing: border-box;
     }
 
-
     body {
-
       margin: 0;
-
-      padding:
-        20px 18px 30px;
-
-      background:
-        #f3f6fa;
-
-      font-family:
-        Arial,
-        "Microsoft JhengHei",
-        sans-serif;
-
-      color:
-        #25324a;
+      padding: 20px 18px 30px;
+      background: #f3f6fa;
+      font-family: Arial, "Microsoft JhengHei", sans-serif;
+      color: #25324a;
     }
-
 
     .card {
-
       width: 100%;
-
       max-width: 480px;
-
-      margin:
-        20px auto;
-
-      padding:
-        24px 20px;
-
-      background:
-        #ffffff;
-
-      border-radius:
-        20px;
-
-      box-shadow:
-        0 8px 30px
-        rgba(
-          0,
-          0,
-          0,
-          0.10
-        );
-
-      text-align:
-        center;
+      margin: 20px auto;
+      padding: 24px 20px;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.10);
+      text-align: center;
     }
-
 
     .title {
-
-      margin-bottom:
-        18px;
-
-      font-size:
-        28px;
-
-      font-weight:
-        900;
+      margin-bottom: 18px;
+      font-size: 28px;
+      font-weight: 900;
     }
-
 
     .device {
-
-      margin-bottom:
-        20px;
-
-      color:
-        #1565c0;
-
-      font-size:
-        23px;
-
-      font-weight:
-        900;
+      margin-bottom: 16px;
+      color: #1565c0;
+      font-size: 23px;
+      font-weight: 900;
     }
 
+    .loginInfo {
+      display: none;
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #ecfdf3;
+      color: #16803c;
+      font-size: 17px;
+      line-height: 1.7;
+      font-weight: 800;
+    }
+
+    .loginInfo.show {
+      display: block;
+    }
+
+    .timer {
+      color: #2563eb;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .timer.expired {
+      color: #dc2626;
+    }
 
     .scannerWrap {
-
       width: 100%;
-
-      overflow:
-        hidden;
-
-      border-radius:
-        16px;
-
-      background:
-        #000000;
+      overflow: hidden;
+      border-radius: 16px;
+      background: #000000;
     }
-
 
     #reader {
-
-      width:
-        100%;
+      width: 100%;
     }
-
 
     #reader video {
-
-      width:
-        100% !important;
-
-      border-radius:
-        16px;
+      width: 100% !important;
+      border-radius: 16px;
     }
-
 
     .result {
-
-      margin-top:
-        18px;
-
-      padding:
-        16px;
-
-      background:
-        #f7f9fc;
-
-      border-radius:
-        12px;
-
-      font-size:
-        18px;
-
-      line-height:
-        1.8;
+      margin-top: 18px;
+      padding: 16px;
+      background: #f7f9fc;
+      border-radius: 12px;
+      font-size: 18px;
+      line-height: 1.8;
     }
-
 
     .result.success {
-
-      background:
-        #ecfdf3;
-
-      color:
-        #16803c;
-
-      font-weight:
-        800;
+      background: #ecfdf3;
+      color: #16803c;
+      font-weight: 800;
     }
-
 
     .result.error {
-
-      background:
-        #fef3f2;
-
-      color:
-        #b42318;
-
-      font-weight:
-        800;
+      background: #fef3f2;
+      color: #b42318;
+      font-weight: 800;
     }
 
+    .result.waiting {
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 800;
+    }
 
     .hint {
-
-      margin-top:
-        14px;
-
-      color:
-        #667085;
-
-      font-size:
-        14px;
-
-      line-height:
-        1.7;
+      margin-top: 14px;
+      color: #667085;
+      font-size: 14px;
+      line-height: 1.7;
     }
-
-
-    .loading {
-
-      display:
-        inline-block;
-
-      margin-right:
-        8px;
-    }
-
 
     .retryButton {
-
-      display:
-        none;
-
-      width:
-        100%;
-
-      margin-top:
-        16px;
-
-      padding:
-        15px 18px;
-
-      border:
-        none;
-
-      border-radius:
-        12px;
-
-      background:
-        #1565c0;
-
-      color:
-        #ffffff;
-
-      font-size:
-        18px;
-
-      font-weight:
-        900;
-
-      cursor:
-        pointer;
+      display: none;
+      width: 100%;
+      margin-top: 16px;
+      padding: 15px 18px;
+      border: none;
+      border-radius: 12px;
+      background: #1565c0;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 900;
+      cursor: pointer;
     }
-
 
     .retryButton:active {
-
-      transform:
-        scale(0.98);
+      transform: scale(0.98);
     }
-
   </style>
-
 </head>
 
-
 <body>
-
-
   <div class="card">
 
-
-    <div class="title">
-
+    <div
+      class="title"
+      id="title"
+    >
       📷 掃描人員 QR Code
-
     </div>
-
 
     <div
       id="device"
-      class="device">
-
+      class="device"
+    >
       目前裝置：讀取中...
-
     </div>
 
+    <div
+      id="loginInfo"
+      class="loginInfo"
+    >
+      <div id="loginPerson"></div>
+      <div>
+        登入剩餘時間：
+        <span
+          id="countdown"
+          class="timer"
+        >--:--</span>
+      </div>
+    </div>
 
     <div class="scannerWrap">
-
       <div id="reader"></div>
-
     </div>
-
 
     <div
       id="result"
-      class="result">
-
-      <span class="loading">
-        ⏳
-      </span>
-
-      正在開啟後鏡頭...
-
+      class="result"
+    >
+      ⏳ 正在開啟後鏡頭...
     </div>
-
 
     <button
       id="retryButton"
@@ -310,34 +196,26 @@
       type="button"
       onclick="restartScanner()"
     >
-
       重新開啟掃描器
-
     </button>
 
-
-    <div class="hint">
-
-      請將人員 QR Code
-      對準掃描框中央。<br>
-
-      本頁只允許即時相機掃描，
-      不提供圖片或相簿掃描。
-
+    <div
+      id="hint"
+      class="hint"
+    >
+      請將人員 QR Code 對準掃描框中央。<br>
+      掃描登入成功後，相機不會關閉，會直接切換為站點掃描。
     </div>
-
 
   </div>
 
-
-
 <script>
-
 //==================================================
 // Apps Script Web App
 //==================================================
 const WEB_APP_URL =
   "https://script.google.com/macros/s/AKfycbx9ZurilzKvOXetrY_EJNZ5HDcx063AfG-mGRwu2DHjoltfowrGdFAigs93LD8JA4gZ/exec";
+
 
 //==================================================
 // 1. 讀取 Device
@@ -347,79 +225,221 @@ const params =
     window.location.search
   );
 
-
 const deviceID =
   String(
-    params.get(
-      "device"
-    ) || ""
+    params.get("device") || ""
   )
     .trim()
     .toUpperCase();
 
 
-const deviceBox =
-  document.getElementById(
-    "device"
-  );
+//==================================================
+// 2. 畫面元件
+//==================================================
+const titleBox =
+  document.getElementById("title");
 
+const deviceBox =
+  document.getElementById("device");
 
 const resultBox =
-  document.getElementById(
-    "result"
-  );
-
+  document.getElementById("result");
 
 const retryButton =
-  document.getElementById(
-    "retryButton"
-  );
+  document.getElementById("retryButton");
+
+const hintBox =
+  document.getElementById("hint");
+
+const loginInfo =
+  document.getElementById("loginInfo");
+
+const loginPerson =
+  document.getElementById("loginPerson");
+
+const countdown =
+  document.getElementById("countdown");
 
 
+//==================================================
+// 3. 狀態變數
+//==================================================
+let html5QrCode = null;
+let scanning = false;
+let processing = false;
+
+// PERSON = 掃人員
+// SITE   = 掃站點
+let scanMode = "PERSON";
+
+let currentPersonID = "";
+let currentPersonName = "";
+let sessionExpireTime = null;
+let countdownTimer = null;
+
+// 防止鏡頭一直對著同一張 QR Code 時重複送出
+let lastDecodedText = "";
+let lastDecodedAt = 0;
+
+
+//==================================================
+// 4. 顯示 Device
+//==================================================
 if (deviceID) {
-
   deviceBox.textContent =
-    "目前裝置：" +
-    deviceID;
-
+    "目前裝置：" + deviceID;
 } else {
-
   deviceBox.textContent =
     "目前裝置：未指定";
-}
-
-
-//==================================================
-// 2. 沒有 Device 時禁止繼續
-//==================================================
-if (!deviceID) {
 
   resultBox.className =
     "result error";
 
   resultBox.textContent =
     "❌ 找不到裝置編碼，請從公務機專屬入口重新進入。";
-
 }
 
 
 //==================================================
-// QR Scanner
+// 5. JSONP 呼叫 Apps Script
+//
+// GitHub Pages 與 Apps Script 為不同網域，
+// 這裡使用 JSONP，讓頁面不用跳轉也可以收到後端結果。
 //==================================================
-let html5QrCode =
-  null;
+function jsonpRequest(
+  requestParams,
+  timeoutMs
+) {
 
+  return new Promise(
+    function(resolve, reject) {
 
-let scanning =
-  false;
+      const timeout =
+        Number(timeoutMs) || 15000;
 
+      const callbackName =
+        "__scannerCallback_" +
+        Date.now() +
+        "_" +
+        Math.floor(
+          Math.random() * 1000000
+        );
 
-let processing =
-  false;
+      const script =
+        document.createElement("script");
+
+      let finished = false;
+
+      function cleanup() {
+        try {
+          delete window[callbackName];
+        } catch (error) {
+          window[callbackName] = undefined;
+        }
+
+        if (
+          script &&
+          script.parentNode
+        ) {
+          script.parentNode.removeChild(
+            script
+          );
+        }
+      }
+
+      const timer =
+        setTimeout(
+          function() {
+
+            if (finished) {
+              return;
+            }
+
+            finished = true;
+            cleanup();
+
+            reject(
+              new Error(
+                "伺服器回應逾時"
+              )
+            );
+          },
+          timeout
+        );
+
+      window[callbackName] =
+        function(data) {
+
+          if (finished) {
+            return;
+          }
+
+          finished = true;
+          clearTimeout(timer);
+          cleanup();
+          resolve(data);
+        };
+
+      const query =
+        new URLSearchParams();
+
+      Object.keys(
+        requestParams || {}
+      ).forEach(
+        function(key) {
+
+          query.set(
+            key,
+            String(
+              requestParams[key] === undefined ||
+              requestParams[key] === null
+                ? ""
+                : requestParams[key]
+            )
+          );
+        }
+      );
+
+      query.set(
+        "callback",
+        callbackName
+      );
+
+      script.src =
+        WEB_APP_URL +
+        "?" +
+        query.toString();
+
+      script.async = true;
+
+      script.onerror =
+        function() {
+
+          if (finished) {
+            return;
+          }
+
+          finished = true;
+          clearTimeout(timer);
+          cleanup();
+
+          reject(
+            new Error(
+              "無法連線 Apps Script"
+            )
+          );
+        };
+
+      document.head.appendChild(
+        script
+      );
+    }
+  );
+}
 
 
 //==================================================
-// 3. 開啟掃描器
+// 6. 開啟掃描器
 //==================================================
 async function startScanner() {
 
@@ -427,105 +447,69 @@ async function startScanner() {
     return;
   }
 
-
-  processing =
-    false;
-
-
+  processing = false;
   retryButton.style.display =
     "none";
-
 
   resultBox.className =
     "result";
 
-
   resultBox.innerHTML =
     "⏳ 正在開啟後鏡頭...";
 
-
   try {
 
-    html5QrCode =
-    new Html5Qrcode(
-      "reader",
-      {
-        verbose: false,
-  
-        // 只辨識 QR Code
-        // 不掃其他 Barcode 格式
-        formatsToSupport: [
-          Html5QrcodeSupportedFormats.QR_CODE
-        ],
+    if (!html5QrCode) {
+      html5QrCode =
+        new Html5Qrcode(
+          "reader",
+          {
+            verbose: false,
+            formatsToSupport: [
+              Html5QrcodeSupportedFormats.QR_CODE
+            ]
+          }
+        );
+    }
 
-      }
-    );
+    scanning = true;
 
-
-    scanning =
-      true;
-
-
-    //================================================
-    // 直接要求後鏡頭
-    // 不顯示相機選單
-    //================================================
     await html5QrCode.start(
-
       {
-        facingMode:
-          "environment"
+        facingMode: "environment"
       },
-
       {
-        // 提高掃描頻率
         fps: 30,
-      
-        // 掃描框縮小
-        // 避免一次吃到旁邊其他 QR Code
         qrbox:
           function(
             viewfinderWidth,
             viewfinderHeight
           ) {
-      
+
             const minEdge =
               Math.min(
                 viewfinderWidth,
                 viewfinderHeight
               );
-      
+
             const size =
               Math.floor(
                 minEdge * 0.58
               );
-      
+
             return {
               width: size,
               height: size
             };
           },
-      
         disableFlip: true,
-      
         aspectRatio: 1.333333
       },
-       
-
       onScanSuccess,
-
       onScanFailure
-
     );
 
-
-    resultBox.className =
-      "result";
-
-
-    resultBox.textContent =
-      "請將人員 QR Code 對準掃描框中央";
-
+    showPersonScanMode();
 
   } catch (error) {
 
@@ -534,24 +518,18 @@ async function startScanner() {
       error
     );
 
-
-    scanning =
-      false;
-
+    scanning = false;
 
     resultBox.className =
       "result error";
 
-
     resultBox.textContent =
       "❌ 無法開啟相機：" +
       (
-        error &&
-        error.message
+        error && error.message
           ? error.message
           : String(error)
       );
-
 
     retryButton.style.display =
       "block";
@@ -560,7 +538,7 @@ async function startScanner() {
 
 
 //==================================================
-// 4. 掃描成功
+// 7. QR 掃描成功
 //==================================================
 async function onScanSuccess(
   decodedText
@@ -570,180 +548,560 @@ async function onScanSuccess(
     return;
   }
 
-
-  processing =
-    true;
-
-
   const rawValue =
     String(
       decodedText || ""
-    )
-      .trim();
+    ).trim();
+
+  if (!rawValue) {
+    return;
+  }
+
+  // 同一內容 2 秒內不重複處理
+  const now = Date.now();
+
+  if (
+    rawValue === lastDecodedText &&
+    now - lastDecodedAt < 2000
+  ) {
+    return;
+  }
+
+  lastDecodedText = rawValue;
+  lastDecodedAt = now;
+
+  if (scanMode === "PERSON") {
+    await handlePersonScan(
+      rawValue
+    );
+    return;
+  }
+
+  if (scanMode === "SITE") {
+    await handleSiteScan(
+      rawValue
+    );
+  }
+}
 
 
-  let personID =
-    "";
+//==================================================
+// 8. 人員 QR Code
+//==================================================
+async function handlePersonScan(
+  rawValue
+) {
 
+  const personID =
+    extractCodeFromQr(
+      rawValue,
+      "user",
+      /^PS\d+$/
+    );
 
-  //================================================
-  // QR 是完整網址
-  // 例如：
-  // .../exec?user=PS0015
-  //================================================
+  if (!personID) {
+
+    resultBox.className =
+      "result error";
+
+    resultBox.innerHTML =
+      "❌ 這不是有效的人員 QR Code<br>" +
+      "請重新掃描 PS 編碼";
+
+    return;
+  }
+
+  processing = true;
+
+  resultBox.className =
+    "result waiting";
+
+  resultBox.innerHTML =
+    "⏳ 已掃描人員：" +
+    escapeHtml(personID) +
+    "<br>正在建立登入 Session...";
+
   try {
 
-    const url =
-      new URL(
-        rawValue
+    const result =
+      await jsonpRequest(
+        {
+          api: "LOGIN",
+          user: personID,
+          device: deviceID
+        },
+        15000
       );
 
+    if (
+      !result ||
+      result.success !== true
+    ) {
 
-    personID =
+      throw new Error(
+        result && result.message
+          ? result.message
+          : "建立人員登入失敗"
+      );
+    }
+
+    currentPersonID =
+      String(
+        result.personID || personID
+      )
+        .trim()
+        .toUpperCase();
+
+    currentPersonName =
+      String(
+        result.personName || ""
+      ).trim();
+
+    sessionExpireTime =
+      result.expireTime
+        ? new Date(result.expireTime)
+        : null;
+
+    // 同一個 GitHub 網域保存目前狀態
+    try {
+      localStorage.setItem(
+        "currentDeviceID",
+        deviceID
+      );
+
+      localStorage.setItem(
+        "currentPersonID",
+        currentPersonID
+      );
+
+      localStorage.setItem(
+        "currentPersonName",
+        currentPersonName
+      );
+
+      localStorage.setItem(
+        "sessionExpireTime",
+        result.expireTime || ""
+      );
+    } catch (error) {
+      console.warn(
+        "localStorage 寫入失敗",
+        error
+      );
+    }
+
+    scanMode = "SITE";
+    processing = false;
+
+    showSiteScanMode();
+    startCountdown();
+
+  } catch (error) {
+
+    console.error(
+      "建立人員登入失敗：",
+      error
+    );
+
+    processing = false;
+    scanMode = "PERSON";
+
+    resultBox.className =
+      "result error";
+
+    resultBox.textContent =
+      "❌ 人員登入失敗：" +
+      (
+        error && error.message
+          ? error.message
+          : String(error)
+      );
+  }
+}
+
+
+//==================================================
+// 9. 站點 QR Code
+//==================================================
+async function handleSiteScan(
+  rawValue
+) {
+
+  if (!currentPersonID) {
+    expireCurrentSession();
+    return;
+  }
+
+  if (
+    sessionExpireTime &&
+    !isNaN(sessionExpireTime.getTime()) &&
+    Date.now() >= sessionExpireTime.getTime()
+  ) {
+    expireCurrentSession();
+    return;
+  }
+
+  const siteID =
+    extractCodeFromQr(
+      rawValue,
+      "code",
+      /^ST\d+$/
+    );
+
+  if (!siteID) {
+
+    resultBox.className =
+      "result error";
+
+    resultBox.innerHTML =
+      "❌ 這不是有效的站點 QR Code<br>" +
+      "請重新掃描 ST 編碼";
+
+    return;
+  }
+
+  processing = true;
+
+  resultBox.className =
+    "result waiting";
+
+  resultBox.innerHTML =
+    "⏳ 已掃描站點：" +
+    escapeHtml(siteID) +
+    "<br>正在更新巡檢資料...";
+
+  try {
+
+    const result =
+      await jsonpRequest(
+        {
+          api: "SITE",
+          code: siteID,
+          set: "1",
+          device: deviceID,
+          user: currentPersonID
+        },
+        15000
+      );
+
+    if (
+      !result ||
+      result.success !== true
+    ) {
+      throw new Error(
+        result && result.message
+          ? result.message
+          : "站點更新失敗"
+      );
+    }
+
+    resultBox.className =
+      "result success";
+
+    resultBox.innerHTML =
+      "✅ 站點掃描完成" +
+      "<br>站點：" +
+      escapeHtml(siteID) +
+      (
+        result.siteName
+          ? "<br>名稱：" +
+            escapeHtml(result.siteName)
+          : ""
+      ) +
+      (
+        result.message
+          ? "<br>" +
+            escapeHtml(result.message)
+          : ""
+      ) +
+      "<br><br>📷 相機保持開啟，可繼續掃描下一個站點";
+
+    // 讓相機繼續掃描下一站
+    setTimeout(
+      function() {
+        processing = false;
+
+        if (scanMode === "SITE") {
+          resultBox.className =
+            "result";
+
+          resultBox.textContent =
+            "📍 請掃描下一個站點 QR Code";
+        }
+      },
+      1500
+    );
+
+  } catch (error) {
+
+    console.error(
+      "站點更新失敗：",
+      error
+    );
+
+    processing = false;
+
+    resultBox.className =
+      "result error";
+
+    resultBox.textContent =
+      "❌ 站點掃描失敗：" +
+      (
+        error && error.message
+          ? error.message
+          : String(error)
+      );
+  }
+}
+
+
+//==================================================
+// 10. QR Code 解析
+//==================================================
+function extractCodeFromQr(
+  rawValue,
+  paramName,
+  regex
+) {
+
+  let value = "";
+
+  try {
+    const url =
+      new URL(rawValue);
+
+    value =
       String(
         url.searchParams.get(
-          "user"
+          paramName
         ) || ""
       )
         .trim()
         .toUpperCase();
 
-
   } catch (error) {
 
-    //==============================================
-    // 如果 QR 內容直接就是 PS0015
-    //==============================================
-    personID =
+    value =
       String(
         rawValue || ""
       )
         .trim()
         .toUpperCase();
-
   }
 
-
-  //================================================
-  // 5. 只接受人員 PS 編碼
-  //================================================
-  if (
-    !/^PS\d+$/.test(
-      personID
-    )
-  ) {
-
-    processing =
-      false;
-
-
-    resultBox.className =
-      "result error";
-
-
-    resultBox.innerHTML =
-      "❌ 這不是有效的人員 QR Code<br>" +
-      "請重新掃描";
-
-
-    return;
-  }
-
-
-  //================================================
-  // 6. 停止相機
-  //================================================
-  try {
-
-    if (
-      html5QrCode &&
-      scanning
-    ) {
-
-      scanning =
-        false;
-
-
-      await html5QrCode.stop();
-
-    }
-
-  } catch (error) {
-
-    console.log(
-      "停止相機：",
-      error
-    );
-  }
-
-
-  //================================================
-  // 7. 顯示掃描結果
-  //================================================
-  resultBox.className =
-    "result success";
-
-
-  resultBox.innerHTML =
-    "✅ 人員 QR Code 掃描成功" +
-    "<br>" +
-    "裝置：" +
-    deviceID +
-    "<br>" +
-    "人員：" +
-    personID +
-    "<br><br>" +
-    "正在建立人員登入...";
-
-
-  //================================================
-  // 8. 回 Apps Script
-  //
-  // 例如：
-  // ?user=PS0015&device=DV0005
-  //================================================
-  const targetUrl =
-    WEB_APP_URL +
-    "?user=" +
-    encodeURIComponent(
-      personID
-    ) +
-    "&device=" +
-    encodeURIComponent(
-      deviceID
-    );
-
-
-  //================================================
-  // 9. 自動前往 Apps Script
-  //================================================
-  setTimeout(
-    function() {
-
-      window.location.href =
-        targetUrl;
-
-    },
-    800
-  );
+  return regex.test(value)
+    ? value
+    : "";
 }
 
 
 //==================================================
-// 10. 掃描過程中的失敗
-//
-// 不顯示錯誤
-// 持續掃描即可
+// 11. 切換到人員掃描模式
+//==================================================
+function showPersonScanMode() {
+
+  scanMode = "PERSON";
+
+  titleBox.textContent =
+    "📷 掃描人員 QR Code";
+
+  hintBox.innerHTML =
+    "請將人員 QR Code 對準掃描框中央。<br>" +
+    "登入成功後相機會保持開啟，直接切換站點掃描。";
+
+  resultBox.className =
+    "result";
+
+  resultBox.textContent =
+    "請將人員 QR Code 對準掃描框中央";
+}
+
+
+//==================================================
+// 12. 切換到站點掃描模式
+//==================================================
+function showSiteScanMode() {
+
+  scanMode = "SITE";
+
+  titleBox.textContent =
+    "📷 掃描站點 QR Code";
+
+  loginInfo.classList.add(
+    "show"
+  );
+
+  loginPerson.textContent =
+    "✅ 人員登入成功：" +
+    currentPersonID +
+    (
+      currentPersonName
+        ? "｜" + currentPersonName
+        : ""
+    );
+
+  hintBox.innerHTML =
+    "人員登入已完成，相機不會關閉。<br>" +
+    "請直接將站點 QR Code 對準掃描框中央。";
+
+  resultBox.className =
+    "result success";
+
+  resultBox.innerHTML =
+    "✅ 人員登入成功" +
+    "<br>人員：" +
+    escapeHtml(currentPersonID) +
+    (
+      currentPersonName
+        ? "<br>姓名：" +
+          escapeHtml(currentPersonName)
+        : ""
+    ) +
+    "<br><br>📍 現在請掃描站點 QR Code";
+}
+
+
+//==================================================
+// 13. 登入倒數
+//==================================================
+function startCountdown() {
+
+  if (countdownTimer) {
+    clearInterval(
+      countdownTimer
+    );
+  }
+
+  function updateCountdown() {
+
+    if (
+      !sessionExpireTime ||
+      isNaN(
+        sessionExpireTime.getTime()
+      )
+    ) {
+      countdown.textContent =
+        "--:--";
+      return;
+    }
+
+    let remaining =
+      sessionExpireTime.getTime() -
+      Date.now();
+
+    if (remaining <= 0) {
+      countdown.textContent =
+        "00:00";
+
+      countdown.classList.add(
+        "expired"
+      );
+
+      expireCurrentSession();
+      return;
+    }
+
+    const totalSeconds =
+      Math.floor(
+        remaining / 1000
+      );
+
+    const minutes =
+      Math.floor(
+        totalSeconds / 60
+      );
+
+    const seconds =
+      totalSeconds % 60;
+
+    countdown.textContent =
+      String(minutes)
+        .padStart(2, "0") +
+      ":" +
+      String(seconds)
+        .padStart(2, "0");
+
+    if (totalSeconds <= 60) {
+      countdown.classList.add(
+        "expired"
+      );
+    } else {
+      countdown.classList.remove(
+        "expired"
+      );
+    }
+  }
+
+  updateCountdown();
+
+  countdownTimer =
+    setInterval(
+      updateCountdown,
+      1000
+    );
+}
+
+
+//==================================================
+// 14. Session 到期
+//==================================================
+function expireCurrentSession() {
+
+  if (countdownTimer) {
+    clearInterval(
+      countdownTimer
+    );
+    countdownTimer = null;
+  }
+
+  currentPersonID = "";
+  currentPersonName = "";
+  sessionExpireTime = null;
+  processing = false;
+
+  try {
+    localStorage.removeItem(
+      "currentPersonID"
+    );
+    localStorage.removeItem(
+      "currentPersonName"
+    );
+    localStorage.removeItem(
+      "sessionExpireTime"
+    );
+  } catch (error) {
+  }
+
+  loginInfo.classList.remove(
+    "show"
+  );
+
+  countdown.textContent =
+    "00:00";
+
+  showPersonScanMode();
+
+  resultBox.className =
+    "result error";
+
+  resultBox.innerHTML =
+    "⏰ 人員登入已到期<br>" +
+    "請重新掃描人員 QR Code";
+}
+
+
+//==================================================
+// 15. 掃描過程中的失敗
 //==================================================
 function onScanFailure(
   error
 ) {
-
+  // 不顯示每一幀辨識失敗，保持掃描即可。
 }
 
 
 //==================================================
-// 11. 重新啟動掃描器
+// 16. 重新啟動掃描器
 //==================================================
 async function restartScanner() {
 
@@ -753,53 +1111,59 @@ async function restartScanner() {
       html5QrCode &&
       scanning
     ) {
-
       await html5QrCode.stop();
-
     }
 
   } catch (error) {
-
   }
 
-
-  scanning =
-    false;
-
-
-  processing =
-    false;
-
+  scanning = false;
+  processing = false;
 
   document.getElementById(
     "reader"
-  ).innerHTML =
-    "";
+  ).innerHTML = "";
 
+  html5QrCode = null;
 
   startScanner();
 }
 
 
 //==================================================
-// 12. 頁面載入後直接啟動
+// 17. HTML 防呆
+//==================================================
+function escapeHtml(
+  value
+) {
+
+  return String(
+    value === undefined ||
+    value === null
+      ? ""
+      : value
+  )
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+//==================================================
+// 18. 頁面載入後直接啟動
 //==================================================
 window.addEventListener(
   "load",
   function() {
 
     if (deviceID) {
-
       startScanner();
-
     }
-
   }
 );
 
 </script>
-
-
 </body>
-
 </html>
