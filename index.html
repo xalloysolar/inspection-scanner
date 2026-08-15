@@ -596,6 +596,18 @@ async function onScanSuccess(
 
 //==================================================
 // 8. 人員 QR Code
+//
+// 規則：
+// 1. 公務機無登入者
+//    → 建立新 Session
+//
+// 2. 同一人重複掃描
+//    → 使用既有 Session
+//
+// 3. 不同人掃描，但公務機已有登入者
+//    → 不更換人員
+//    → 直接載入目前登入者
+//    → 切換到站點掃描
 //==================================================
 async function handlePersonScan(
   rawValue
@@ -608,6 +620,10 @@ async function handlePersonScan(
       /^PS\d+$/
     );
 
+
+  //================================================
+  // 1. 檢查人員 QR Code
+  //================================================
   if (!personID) {
 
     resultBox.className =
@@ -620,6 +636,10 @@ async function handlePersonScan(
     return;
   }
 
+
+  //================================================
+  // 2. 防止重複處理
+  //================================================
   processing = true;
 
   resultBox.className =
@@ -628,10 +648,14 @@ async function handlePersonScan(
   resultBox.innerHTML =
     "⏳ 已掃描人員：" +
     escapeHtml(personID) +
-    "<br>正在建立登入 Session...";
+    "<br>正在確認公務機登入狀態...";
+
 
   try {
 
+    //================================================
+    // 3. 呼叫 Apps Script LOGIN
+    //================================================
     const result =
       await jsonpRequest(
         {
@@ -642,37 +666,118 @@ async function handlePersonScan(
         15000
       );
 
-    if (
-      !result ||
-      result.success !== true
-    ) {
+
+    if (!result) {
 
       throw new Error(
-        result && result.message
-          ? result.message
-          : "建立人員登入失敗"
+        "Apps Script 沒有回傳資料"
       );
     }
 
+
+    //================================================
+    // 4. 判斷要使用哪一位登入者
+    //
+    // A. success = true
+    //    → 新登入成功 / 同一人已登入
+    //
+    // B. success = false
+    //    但有 currentPersonID
+    //    → 此公務機目前已有其他登入者
+    //    → 不更換，直接使用目前登入者
+    //================================================
+    let activePersonID = "";
+    let activePersonName = "";
+    let activeExpireTime = "";
+
+
+    //================================================
+    // 4-1. 正常登入成功
+    //================================================
+    if (result.success === true) {
+
+      activePersonID =
+        String(
+          result.personID ||
+          personID
+        )
+          .trim()
+          .toUpperCase();
+
+      activePersonName =
+        String(
+          result.personName || ""
+        )
+          .trim();
+
+      activeExpireTime =
+        result.expireTime || "";
+    }
+
+
+    //================================================
+    // 4-2. 公務機已有其他登入者
+    //================================================
+    else if (
+      result.currentPersonID
+    ) {
+
+      activePersonID =
+        String(
+          result.currentPersonID
+        )
+          .trim()
+          .toUpperCase();
+
+      activePersonName =
+        String(
+          result.currentPersonName || ""
+        )
+          .trim();
+
+      activeExpireTime =
+        result.expireTime || "";
+    }
+
+
+    //================================================
+    // 4-3. 真正登入失敗
+    //================================================
+    else {
+
+      throw new Error(
+        result.message ||
+        "建立人員登入失敗"
+      );
+    }
+
+
+    //================================================
+    // 5. 寫入目前有效登入者
+    //================================================
     currentPersonID =
-      String(
-        result.personID || personID
-      )
-        .trim()
-        .toUpperCase();
+      activePersonID;
 
     currentPersonName =
-      String(
-        result.personName || ""
-      ).trim();
+      activePersonName;
 
+
+    //================================================
+    // 6. 解析 Session 到期時間
+    //================================================
     sessionExpireTime =
-      result.expireTime
-        ? new Date(result.expireTime)
+      activeExpireTime
+        ? new Date(
+            activeExpireTime
+          )
         : null;
 
-    // 同一個 GitHub 網域保存目前狀態
+
+    //================================================
+    // 7. 儲存 GitHub 本機狀態
+    //================================================
     try {
+
       localStorage.setItem(
         "currentDeviceID",
         deviceID
@@ -690,20 +795,63 @@ async function handlePersonScan(
 
       localStorage.setItem(
         "sessionExpireTime",
-        result.expireTime || ""
+        activeExpireTime
       );
+
     } catch (error) {
+
       console.warn(
         "localStorage 寫入失敗",
         error
       );
     }
 
-    scanMode = "SITE";
-    processing = false;
+
+    //================================================
+    // 8. 切換站點掃描模式
+    //================================================
+    scanMode =
+      "SITE";
+
+    processing =
+      false;
 
     showSiteScanMode();
+
     startCountdown();
+
+
+    //================================================
+    // 9. 如果剛才掃描的是不同人
+    //    額外提示目前真正登入者
+    //================================================
+    if (
+      result.success !== true &&
+      result.currentPersonID
+    ) {
+
+      resultBox.className =
+        "result success";
+
+      resultBox.innerHTML =
+        "⚠️ 此公務機已有登入人員" +
+        "<br><br>" +
+        "✅ 目前登入：" +
+        escapeHtml(
+          currentPersonID
+        ) +
+        (
+          currentPersonName
+            ? "｜" +
+              escapeHtml(
+                currentPersonName
+              )
+            : ""
+        ) +
+        "<br><br>" +
+        "📍 已切換為站點掃描模式";
+    }
+
 
   } catch (error) {
 
@@ -712,8 +860,11 @@ async function handlePersonScan(
       error
     );
 
-    processing = false;
-    scanMode = "PERSON";
+    processing =
+      false;
+
+    scanMode =
+      "PERSON";
 
     resultBox.className =
       "result error";
@@ -721,7 +872,8 @@ async function handlePersonScan(
     resultBox.textContent =
       "❌ 人員登入失敗：" +
       (
-        error && error.message
+        error &&
+        error.message
           ? error.message
           : String(error)
       );
