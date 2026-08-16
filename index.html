@@ -9,6 +9,34 @@
 
   <title>智慧巡檢－QR Code 掃描</title>
 
+  <!--==================================================
+    PWA / 主畫面安裝設定
+  ==================================================-->
+  <link rel="manifest" href="./manifest.json">
+
+  <meta name="theme-color" content="#1565c0">
+
+  <meta
+    name="apple-mobile-web-app-capable"
+    content="yes"
+  >
+
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="default"
+  >
+
+  <meta
+    name="apple-mobile-web-app-title"
+    content="智慧巡檢系統"
+  >
+
+  <link
+    rel="apple-touch-icon"
+    href="./icons/icon-192.png"
+  >
+
+
   <script
     src="https://unpkg.com/html5-qrcode"
     type="text/javascript">
@@ -225,10 +253,133 @@
     .retryButton:active {
       transform: scale(0.98);
     }
+
+    /*==================================================
+      PWA 安裝畫面
+    ==================================================*/
+    .installPanel {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      padding: 24px;
+      background: rgba(15, 23, 42, 0.72);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .installPanel.show {
+      display: flex;
+    }
+
+    .installCard {
+      width: 100%;
+      max-width: 420px;
+      padding: 32px 24px;
+      background: #ffffff;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+      text-align: center;
+    }
+
+    .installIcon {
+      margin-bottom: 12px;
+      font-size: 60px;
+    }
+
+    .installTitle {
+      margin-bottom: 16px;
+      color: #1d2939;
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .installMessage {
+      margin-bottom: 24px;
+      color: #475467;
+      font-size: 17px;
+      line-height: 1.8;
+      font-weight: 700;
+    }
+
+    .installButton,
+    .continueButton {
+      width: 100%;
+      padding: 15px 18px;
+      border-radius: 14px;
+      font-size: 17px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .installButton {
+      border: none;
+      background: #1565c0;
+      color: #ffffff;
+    }
+
+    .continueButton {
+      margin-top: 12px;
+      border: 1px solid #d0d5dd;
+      background: #ffffff;
+      color: #475467;
+    }
+
+    .installButton:active,
+    .continueButton:active {
+      transform: scale(0.98);
+    }
+
   </style>
 </head>
 
 <body>
+
+  <!--==================================================
+    智慧巡檢系統主畫面安裝提示
+  ==================================================-->
+  <div
+    id="installPanel"
+    class="installPanel"
+  >
+    <div class="installCard">
+
+      <div class="installIcon">
+        📱
+      </div>
+
+      <div class="installTitle">
+        智慧巡檢系統
+      </div>
+
+      <div
+        id="installMessage"
+        class="installMessage"
+      >
+        正在檢查手機環境...
+      </div>
+
+      <button
+        id="installButton"
+        class="installButton"
+        type="button"
+        onclick="installSmartInspectionApp()"
+      >
+        📱 安裝智慧巡檢系統
+      </button>
+
+      <button
+        id="continueButton"
+        class="continueButton"
+        type="button"
+        onclick="continueToInspection()"
+      >
+        先使用網頁版
+      </button>
+
+    </div>
+  </div>
+
   <div class="card">
 
     <div
@@ -325,12 +476,70 @@ const params =
     window.location.search
   );
 
-const deviceID =
+let deviceID =
   String(
     params.get("device") || ""
   )
     .trim()
     .toUpperCase();
+
+
+//==================================================
+// 1-1. 沒有網址 device 時，讀取已保存的裝置編碼
+//
+// 第一次由 QR Code 入口進來時：
+// ?device=DV0001
+//
+// 之後從手機主畫面開啟 PWA 時，網址可能沒有 device，
+// 這裡會自動取回之前保存的 currentDeviceID。
+//==================================================
+if (!deviceID) {
+
+  try {
+
+    deviceID =
+      String(
+        localStorage.getItem(
+          "currentDeviceID"
+        ) || ""
+      )
+        .trim()
+        .toUpperCase();
+
+  } catch (error) {
+
+    console.warn(
+      "無法讀取 currentDeviceID",
+      error
+    );
+
+  }
+}
+
+
+//==================================================
+// 1-2. 如果本次網址有帶 device，就立即保存
+//
+// 這樣不必等到人員登入成功後才保存裝置編碼。
+//==================================================
+if (deviceID) {
+
+  try {
+
+    localStorage.setItem(
+      "currentDeviceID",
+      deviceID
+    );
+
+  } catch (error) {
+
+    console.warn(
+      "無法保存 currentDeviceID",
+      error
+    );
+
+  }
+}
 
 
 //==================================================
@@ -370,6 +579,348 @@ const scanHistoryList =
 
 const scanHistoryCount =
   document.getElementById("scanHistoryCount");
+
+
+
+//==================================================
+// 2-1. PWA 安裝畫面元件
+//==================================================
+const installPanel =
+  document.getElementById(
+    "installPanel"
+  );
+
+const installMessage =
+  document.getElementById(
+    "installMessage"
+  );
+
+const installButton =
+  document.getElementById(
+    "installButton"
+  );
+
+const continueButton =
+  document.getElementById(
+    "continueButton"
+  );
+
+let deferredInstallPrompt =
+  null;
+
+
+//==================================================
+// 2-2. Android / Chromium 安裝事件
+//==================================================
+window.addEventListener(
+  "beforeinstallprompt",
+  function(event) {
+
+    event.preventDefault();
+
+    deferredInstallPrompt =
+      event;
+
+    console.log(
+      "PWA 已符合瀏覽器安裝提示條件"
+    );
+
+  }
+);
+
+
+//==================================================
+// 2-3. 判斷手機系統
+//==================================================
+function detectMobileOS() {
+
+  const ua =
+    navigator.userAgent ||
+    navigator.vendor ||
+    window.opera ||
+    "";
+
+  if (
+    /android/i.test(
+      ua
+    )
+  ) {
+
+    return "ANDROID";
+
+  }
+
+  if (
+    /iPad|iPhone|iPod/i.test(
+      ua
+    )
+  ) {
+
+    return "IOS";
+
+  }
+
+  // 部分 iPadOS 會回報為 MacIntel
+  if (
+    navigator.platform ===
+      "MacIntel" &&
+    navigator.maxTouchPoints > 1
+  ) {
+
+    return "IOS";
+
+  }
+
+  return "OTHER";
+}
+
+
+//==================================================
+// 2-4. 是否已由主畫面 App 模式開啟
+//==================================================
+function isStandaloneMode() {
+
+  return (
+    window
+      .matchMedia(
+        "(display-mode: standalone)"
+      )
+      .matches
+    ||
+    window.navigator
+      .standalone === true
+  );
+}
+
+
+//==================================================
+// 2-5. 顯示對應系統的安裝引導
+//==================================================
+function checkAppInstallation() {
+
+  // 已從主畫面 App 開啟 → 直接進巡檢
+  if (
+    isStandaloneMode()
+  ) {
+
+    console.log(
+      "目前為主畫面 App 模式"
+    );
+
+    continueToInspection();
+
+    return;
+  }
+
+  const os =
+    detectMobileOS();
+
+  console.log(
+    "目前裝置系統：",
+    os
+  );
+
+  // Android
+  if (
+    os === "ANDROID"
+  ) {
+
+    installPanel.classList.add(
+      "show"
+    );
+
+    installMessage.innerHTML =
+      "已偵測到 <b>Android</b> 手機。<br><br>" +
+      "建議將「智慧巡檢系統」安裝到手機主畫面，" +
+      "之後可直接點桌面圖示進入巡檢。";
+
+    installButton.style.display =
+      "block";
+
+    installButton.textContent =
+      "📱 安裝智慧巡檢系統";
+
+    continueButton.textContent =
+      "先使用網頁版";
+
+    return;
+  }
+
+  // iPhone / iPad
+  if (
+    os === "IOS"
+  ) {
+
+    installPanel.classList.add(
+      "show"
+    );
+
+    installMessage.innerHTML =
+      "已偵測到 <b>iPhone / iPad</b>。<br><br>" +
+      "請使用 Safari：<br>" +
+      "① 點選「分享」按鈕<br>" +
+      "② 選擇「加入主畫面」<br>" +
+      "③ 確認名稱「智慧巡檢系統」<br>" +
+      "④ 點選「加入」";
+
+    installButton.style.display =
+      "none";
+
+    continueButton.textContent =
+      "我知道了，進入智慧巡檢";
+
+    return;
+  }
+
+  // 電腦或其他裝置直接進入
+  continueToInspection();
+}
+
+
+//==================================================
+// 2-6. Android 安裝智慧巡檢系統
+//==================================================
+async function installSmartInspectionApp() {
+
+  if (
+    !deferredInstallPrompt
+  ) {
+
+    installMessage.innerHTML =
+      "目前瀏覽器尚未提供直接安裝功能。<br><br>" +
+      "請使用 Chrome 開啟此頁，" +
+      "或從瀏覽器選單選擇「安裝應用程式 / 加入主畫面」。";
+
+    return;
+  }
+
+  try {
+
+    deferredInstallPrompt.prompt();
+
+    const choice =
+      await deferredInstallPrompt
+        .userChoice;
+
+    console.log(
+      "PWA 安裝選擇：",
+      choice.outcome
+    );
+
+    if (
+      choice.outcome ===
+      "accepted"
+    ) {
+
+      installMessage.innerHTML =
+        "✅ 智慧巡檢系統已加入主畫面";
+
+      installButton.style.display =
+        "none";
+
+      setTimeout(
+        function() {
+
+          continueToInspection();
+
+        },
+        500
+      );
+
+    }
+
+    deferredInstallPrompt =
+      null;
+
+  } catch (error) {
+
+    console.error(
+      "PWA 安裝失敗",
+      error
+    );
+
+    installMessage.innerHTML =
+      "❌ 安裝流程發生錯誤。<br>" +
+      "可以先使用網頁版繼續巡檢。";
+
+  }
+}
+
+
+//==================================================
+// 2-7. 進入原本巡檢掃描流程
+//==================================================
+function continueToInspection() {
+
+  installPanel.classList.remove(
+    "show"
+  );
+
+  if (
+    deviceID &&
+    !scanning
+  ) {
+
+    startScanner();
+
+  }
+}
+
+
+//==================================================
+// 2-8. 安裝完成事件
+//==================================================
+window.addEventListener(
+  "appinstalled",
+  function() {
+
+    console.log(
+      "智慧巡檢系統已安裝完成"
+    );
+
+    installPanel.classList.remove(
+      "show"
+    );
+
+  }
+);
+
+
+//==================================================
+// 2-9. 註冊 Service Worker
+//==================================================
+async function registerServiceWorker() {
+
+  if (
+    !("serviceWorker" in navigator)
+  ) {
+
+    return;
+  }
+
+  try {
+
+    const registration =
+      await navigator
+        .serviceWorker
+        .register(
+          "./service-worker.js"
+        );
+
+    console.log(
+      "Service Worker 註冊成功",
+      registration.scope
+    );
+
+  } catch (error) {
+
+    console.warn(
+      "Service Worker 註冊失敗",
+      error
+    );
+
+  }
+}
 
 //==================================================
 // 3. 狀態變數
@@ -1487,9 +2038,21 @@ window.addEventListener(
   "load",
   function() {
 
-    if (deviceID) {
-      startScanner();
+    registerServiceWorker();
+
+    if (!deviceID) {
+
+      installPanel.classList.remove(
+        "show"
+      );
+
+      return;
     }
+
+    // 先判斷是否需要顯示 Android / iPhone 安裝引導；
+    // 若已從主畫面 App 開啟，會直接進入掃描器。
+    checkAppInstallation();
+
   }
 );
 
