@@ -1357,11 +1357,15 @@ async function handlePersonScan(
       );
     }
 
-    scanMode = "SITE";
-    processing = false;
-
-    showSiteScanMode();
-    startCountdown();
+   // 重新掃描人員登入成功後
+  // 清除上一輪站點掃描紀錄
+  clearSiteScanHistory();
+  
+  scanMode = "SITE";
+  processing = false;
+  
+  showSiteScanMode();
+  startCountdown();
 
   } catch (error) {
 
@@ -1565,7 +1569,32 @@ async function handleSiteScan(
   }
 }
 
+//==================================================
+// 清除本次登入的站點掃描紀錄
+//==================================================
+function clearSiteScanHistory() {
 
+  scannedSiteCount = 0;
+
+  if (scanHistoryCount) {
+
+    scanHistoryCount.textContent =
+      "0";
+  }
+
+  if (scanHistoryList) {
+
+    scanHistoryList.innerHTML =
+      "";
+  }
+
+  if (scanHistory) {
+
+    scanHistory.classList.remove(
+      "show"
+    );
+  }
+}
 //==================================================
 // 9-1. 新增一筆站點掃描紀錄
 //
@@ -1920,24 +1949,9 @@ function expireCurrentSession() {
   sessionExpireTime = null;
   processing = false;
 
+  
   // 清除本次登入的畫面掃描紀錄
-  scannedSiteCount = 0;
-
-  if (scanHistoryCount) {
-    scanHistoryCount.textContent =
-      "0";
-  }
-
-  if (scanHistoryList) {
-    scanHistoryList.innerHTML =
-      "";
-  }
-
-  if (scanHistory) {
-    scanHistory.classList.remove(
-      "show"
-    );
-  }
+  clearSiteScanHistory();
 
   try {
     localStorage.removeItem(
