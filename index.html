@@ -979,8 +979,12 @@ function jsonpRequest(
   return new Promise(
     function(resolve, reject) {
 
+      // 最少等待 30 秒，避免 V2 已寫入、V1 同步尚未回傳時誤報逾時
       const timeout =
-        Number(timeoutMs) || 15000;
+        Math.max(
+          Number(timeoutMs) || 30000,
+          30000
+        );
 
       const callbackName =
         "__scannerCallback_" +
