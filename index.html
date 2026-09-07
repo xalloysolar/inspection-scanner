@@ -182,6 +182,12 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
+      max-height: 34vh;
+      max-height: 34dvh;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      padding-right: 2px;
     }
 
     .scanHistoryItem {
@@ -252,6 +258,117 @@
 
     .retryButton:active {
       transform: scale(0.98);
+    }
+
+    /*==================================================
+      小尺寸手機版
+      壓縮上方資訊與相機高度，保留掃描紀錄顯示空間
+    ==================================================*/
+    @media (max-width: 430px), (max-height: 760px) {
+      body {
+        padding: 8px 8px calc(12px + env(safe-area-inset-bottom));
+      }
+
+      .card {
+        margin: 4px auto;
+        padding: 14px 12px;
+        border-radius: 16px;
+      }
+
+      .title {
+        margin-bottom: 8px;
+        font-size: 22px;
+        line-height: 1.25;
+      }
+
+      .device {
+        margin-bottom: 8px;
+        font-size: 18px;
+        line-height: 1.3;
+      }
+
+      .loginInfo {
+        margin-bottom: 9px;
+        padding: 8px 10px;
+        border-radius: 11px;
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      .timer {
+        font-size: 21px;
+      }
+
+      .scannerWrap,
+      #reader,
+      #reader video {
+        height: clamp(210px, 35dvh, 280px) !important;
+      }
+
+      .scannerWrap,
+      #reader video {
+        border-radius: 12px;
+      }
+
+      .result {
+        margin-top: 9px;
+        padding: 9px 10px;
+        border-radius: 10px;
+        font-size: 15px;
+        line-height: 1.45;
+      }
+
+      .scanHistory {
+        margin-top: 9px;
+      }
+
+      .scanHistoryTitle {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        margin-bottom: 6px;
+        padding: 5px 0;
+        background: #ffffff;
+        font-size: 15px;
+      }
+
+      .scanHistoryList {
+        gap: 6px;
+        max-height: clamp(112px, 22dvh, 180px);
+      }
+
+      .scanHistoryItem {
+        gap: 8px;
+        padding: 8px 10px;
+        border-radius: 10px;
+      }
+
+      .scanHistoryIcon {
+        font-size: 21px;
+      }
+
+      .scanHistoryMain {
+        font-size: 15px;
+        line-height: 1.35;
+      }
+
+      .scanHistorySub {
+        margin-top: 1px;
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .hint {
+        margin-top: 8px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .retryButton {
+        margin-top: 9px;
+        padding: 11px 14px;
+        font-size: 16px;
+      }
     }
 
     /*==================================================
