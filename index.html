@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
@@ -13,12 +12,2056 @@
   <!--==================================================
     PWA / 主畫面安裝設定
   ==================================================-->
-
   <link rel="manifest" href="./manifest.json">
 
   <meta name="theme-color" content="#1565c0">
 
-<meta
-name="apple-mobile-web-app-capable"
-content="yes"
+  <meta
+    name="apple-mobile-web-app-capable"
+    content="yes"
+  >
 
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="default"
+  >
+
+  <meta
+    name="apple-mobile-web-app-title"
+    content="智慧巡檢系統"
+  >
+
+  <link
+    rel="apple-touch-icon"
+    href="./icons/icon-192.png"
+  >
+
+
+  <script
+    src="https://unpkg.com/html5-qrcode"
+    type="text/javascript">
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px 18px 30px;
+      background: #f3f6fa;
+      font-family: Arial, "Microsoft JhengHei", sans-serif;
+      color: #25324a;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 480px;
+      margin: 20px auto;
+      padding: 24px 20px;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.10);
+      text-align: center;
+    }
+
+    .title {
+      margin-bottom: 18px;
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .device {
+      margin-bottom: 16px;
+      color: #1565c0;
+      font-size: 23px;
+      font-weight: 900;
+    }
+
+    .loginInfo {
+      display: none;
+      margin-bottom: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #ecfdf3;
+      color: #16803c;
+      font-size: 17px;
+      line-height: 1.7;
+      font-weight: 800;
+    }
+
+    .loginInfo.show {
+      display: block;
+    }
+
+    .timer {
+      color: #2563eb;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .timer.expired {
+      color: #dc2626;
+    }
+    
+    .scannerWrap {
+      width: 100%;
+      max-width: 380px;
+      height: 340px;
+      margin: 0 auto;
+      overflow: hidden;
+      border-radius: 16px;
+      background: #000000;
+    }
+    
+    #reader {
+      width: 100%;
+      height: 340px;
+      overflow: hidden;
+    }
+    
+    #reader video {
+      width: 100% !important;
+      height: 340px !important;
+      object-fit: cover !important;
+      border-radius: 16px;
+    }
+
+    .result {
+      margin-top: 18px;
+      padding: 16px;
+      background: #f7f9fc;
+      border-radius: 12px;
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+    .result.success {
+      background: #ecfdf3;
+      color: #16803c;
+      font-weight: 800;
+    }
+
+    .result.error {
+      background: #fef3f2;
+      color: #b42318;
+      font-weight: 800;
+    }
+
+    .result.waiting {
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+
+
+    /*==================================================
+      站點掃描紀錄：登入有效時間內持續往下新增
+    ==================================================*/
+    .scanHistory {
+      margin-top: 16px;
+      display: none;
+      text-align: left;
+    }
+
+    .scanHistory.show {
+      display: block;
+    }
+
+    .scanHistoryTitle {
+      margin-bottom: 10px;
+      font-size: 17px;
+      font-weight: 900;
+      color: #344054;
+      text-align: center;
+    }
+
+    .scanHistoryList {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .scanHistoryItem {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 13px 14px;
+      border-radius: 14px;
+      background: #ecfdf3;
+      border: 1px solid #d1fadf;
+      box-shadow: 0 2px 8px rgba(16, 24, 40, 0.06);
+    }
+
+    .scanHistoryIcon {
+      flex: 0 0 auto;
+      font-size: 27px;
+      line-height: 1;
+      margin-top: 2px;
+    }
+
+    .scanHistoryContent {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .scanHistoryMain {
+      color: #16803c;
+      font-size: 17px;
+      line-height: 1.55;
+      font-weight: 900;
+      word-break: break-word;
+    }
+
+    .scanHistorySub {
+      margin-top: 3px;
+      color: #667085;
+      font-size: 14px;
+      line-height: 1.45;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .scanHistoryCount {
+      color: #2563eb;
+      font-weight: 900;
+    }
+
+    .hint {
+      margin-top: 14px;
+      color: #667085;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .retryButton {
+      display: none;
+      width: 100%;
+      margin-top: 16px;
+      padding: 15px 18px;
+      border: none;
+      border-radius: 12px;
+      background: #1565c0;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .retryButton:active {
+      transform: scale(0.98);
+    }
+
+    /*==================================================
+      PWA 安裝畫面
+    ==================================================*/
+    .installPanel {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      padding: 24px;
+      background: rgba(15, 23, 42, 0.72);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .installPanel.show {
+      display: flex;
+    }
+
+    .installCard {
+      width: 100%;
+      max-width: 420px;
+      padding: 32px 24px;
+      background: #ffffff;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+      text-align: center;
+    }
+
+    .installIcon {
+      margin-bottom: 12px;
+      font-size: 60px;
+    }
+
+    .installTitle {
+      margin-bottom: 16px;
+      color: #1d2939;
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .installMessage {
+      margin-bottom: 24px;
+      color: #475467;
+      font-size: 17px;
+      line-height: 1.8;
+      font-weight: 700;
+    }
+
+    .installButton,
+    .continueButton {
+      width: 100%;
+      padding: 15px 18px;
+      border-radius: 14px;
+      font-size: 17px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .installButton {
+      border: none;
+      background: #1565c0;
+      color: #ffffff;
+    }
+
+    .continueButton {
+      margin-top: 12px;
+      border: 1px solid #d0d5dd;
+      background: #ffffff;
+      color: #475467;
+    }
+
+    .installButton:active,
+    .continueButton:active {
+      transform: scale(0.98);
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <!--==================================================
+    智慧巡檢系統主畫面安裝提示
+  ==================================================-->
+  <div
+    id="installPanel"
+    class="installPanel"
+  >
+    <div class="installCard">
+
+      <div class="installIcon">
+        📱
+      </div>
+
+      <div class="installTitle">
+        智慧巡檢系統
+      </div>
+
+      <div
+        id="installMessage"
+        class="installMessage"
+      >
+        正在檢查手機環境...
+      </div>
+
+      <button
+        id="installButton"
+        class="installButton"
+        type="button"
+        onclick="installSmartInspectionApp()"
+      >
+        📱 安裝智慧巡檢系統
+      </button>
+
+      <button
+        id="continueButton"
+        class="continueButton"
+        type="button"
+        onclick="continueToInspection()"
+      >
+        先使用網頁版
+      </button>
+
+    </div>
+  </div>
+
+  <div class="card">
+
+    <div
+      class="title"
+      id="title"
+    >
+      📷 掃描人員 QR Code
+    </div>
+
+    <div
+      id="device"
+      class="device"
+    >
+      目前裝置：讀取中...
+    </div>
+
+    <div
+      id="loginInfo"
+      class="loginInfo"
+    >
+      <div id="loginPerson"></div>
+      <div>
+        登入剩餘時間：
+        <span
+          id="countdown"
+          class="timer"
+        >--:--</span>
+      </div>
+    </div>
+
+    <div class="scannerWrap">
+      <div id="reader"></div>
+    </div>
+
+    <div
+      id="result"
+      class="result"
+    >
+      ⏳ 正在開啟後鏡頭...
+    </div>
+
+
+    <!-- 登入有效時間內，成功掃描的站點會一直往下累加 -->
+    <div
+      id="scanHistory"
+      class="scanHistory"
+    >
+      <div class="scanHistoryTitle">
+        📋 本次登入站點掃描紀錄
+        <span
+          id="scanHistoryCount"
+          class="scanHistoryCount"
+        >0</span>
+      </div>
+
+      <div
+        id="scanHistoryList"
+        class="scanHistoryList"
+      ></div>
+    </div>
+
+    <button
+      id="retryButton"
+      class="retryButton"
+      type="button"
+      onclick="restartScanner()"
+    >
+      重新開啟掃描器
+    </button>
+
+    <div
+      id="hint"
+      class="hint"
+    >
+      請將人員 QR Code 對準掃描框中央。<br>
+      掃描登入成功後，相機不會關閉，會直接切換為站點掃描。
+    </div>
+
+  </div>
+
+<script>
+//==================================================
+// Apps Script Web App
+//==================================================
+const WEB_APP_URL =
+  "https://script.google.com/macros/s/AKfycbx9ZurilzKvOXetrY_EJNZ5HDcx063AfG-mGRwu2DHjoltfowrGdFAigs93LD8JA4gZ/exec";
+
+
+//==================================================
+// 1. 讀取 Device
+//==================================================
+const params =
+  new URLSearchParams(
+    window.location.search
+  );
+
+let deviceID =
+  String(
+    params.get("device") || ""
+  )
+    .trim()
+    .toUpperCase();
+
+
+//==================================================
+// 1-1. 沒有網址 device 時，讀取已保存的裝置編碼
+//
+// 第一次由 QR Code 入口進來時：
+// ?device=DV0001
+//
+// 之後從手機主畫面開啟 PWA 時，網址可能沒有 device，
+// 這裡會自動取回之前保存的 currentDeviceID。
+//==================================================
+if (!deviceID) {
+
+  try {
+
+    deviceID =
+      String(
+        localStorage.getItem(
+          "currentDeviceID"
+        ) || ""
+      )
+        .trim()
+        .toUpperCase();
+
+  } catch (error) {
+
+    console.warn(
+      "無法讀取 currentDeviceID",
+      error
+    );
+
+  }
+}
+
+
+//==================================================
+// 1-2. 如果本次網址有帶 device，就立即保存
+//
+// 這樣不必等到人員登入成功後才保存裝置編碼。
+//==================================================
+if (deviceID) {
+
+  try {
+
+    localStorage.setItem(
+      "currentDeviceID",
+      deviceID
+    );
+
+  } catch (error) {
+
+    console.warn(
+      "無法保存 currentDeviceID",
+      error
+    );
+
+  }
+}
+
+
+//==================================================
+// 2. 畫面元件
+//==================================================
+const titleBox =
+  document.getElementById("title");
+
+const deviceBox =
+  document.getElementById("device");
+
+const resultBox =
+  document.getElementById("result");
+
+const retryButton =
+  document.getElementById("retryButton");
+
+const hintBox =
+  document.getElementById("hint");
+
+const loginInfo =
+  document.getElementById("loginInfo");
+
+const loginPerson =
+  document.getElementById("loginPerson");
+
+const countdown =
+  document.getElementById("countdown");
+
+
+
+const scanHistory =
+  document.getElementById("scanHistory");
+
+const scanHistoryList =
+  document.getElementById("scanHistoryList");
+
+const scanHistoryCount =
+  document.getElementById("scanHistoryCount");
+
+
+
+//==================================================
+// 2-1. PWA 安裝畫面元件
+//==================================================
+const installPanel =
+  document.getElementById(
+    "installPanel"
+  );
+
+const installMessage =
+  document.getElementById(
+    "installMessage"
+  );
+
+const installButton =
+  document.getElementById(
+    "installButton"
+  );
+
+const continueButton =
+  document.getElementById(
+    "continueButton"
+  );
+
+let deferredInstallPrompt =
+  null;
+
+
+//==================================================
+// 2-2. Android / Chromium 安裝事件
+//==================================================
+window.addEventListener(
+  "beforeinstallprompt",
+  function(event) {
+
+    event.preventDefault();
+
+    deferredInstallPrompt =
+      event;
+
+    console.log(
+      "PWA 已符合瀏覽器安裝提示條件"
+    );
+
+  }
+);
+
+
+//==================================================
+// 2-3. 判斷手機系統
+//==================================================
+function detectMobileOS() {
+
+  const ua =
+    navigator.userAgent ||
+    navigator.vendor ||
+    window.opera ||
+    "";
+
+  if (
+    /android/i.test(
+      ua
+    )
+  ) {
+
+    return "ANDROID";
+
+  }
+
+  if (
+    /iPad|iPhone|iPod/i.test(
+      ua
+    )
+  ) {
+
+    return "IOS";
+
+  }
+
+  // 部分 iPadOS 會回報為 MacIntel
+  if (
+    navigator.platform ===
+      "MacIntel" &&
+    navigator.maxTouchPoints > 1
+  ) {
+
+    return "IOS";
+
+  }
+
+  return "OTHER";
+}
+
+
+//==================================================
+// 2-4. 是否已由主畫面 App 模式開啟
+//==================================================
+function isStandaloneMode() {
+
+  return (
+    window
+      .matchMedia(
+        "(display-mode: standalone)"
+      )
+      .matches
+    ||
+    window.navigator
+      .standalone === true
+  );
+}
+
+
+//==================================================
+// 2-5. 顯示對應系統的安裝引導
+//==================================================
+function checkAppInstallation() {
+
+  // 已從主畫面 App 開啟 → 直接進巡檢
+  if (
+    isStandaloneMode()
+  ) {
+
+    console.log(
+      "目前為主畫面 App 模式"
+    );
+
+    continueToInspection();
+
+    return;
+  }
+
+  const os =
+    detectMobileOS();
+
+  console.log(
+    "目前裝置系統：",
+    os
+  );
+
+  // Android
+  if (
+    os === "ANDROID"
+  ) {
+
+    installPanel.classList.add(
+      "show"
+    );
+
+    installMessage.innerHTML =
+      "已偵測到 <b>Android</b> 手機。<br><br>" +
+      "建議將「智慧巡檢系統」安裝到手機主畫面，" +
+      "之後可直接點桌面圖示進入巡檢。";
+
+    installButton.style.display =
+      "block";
+
+    installButton.textContent =
+      "📱 安裝智慧巡檢系統";
+
+    continueButton.textContent =
+      "先使用網頁版";
+
+    return;
+  }
+
+  // iPhone / iPad
+  if (
+    os === "IOS"
+  ) {
+
+    installPanel.classList.add(
+      "show"
+    );
+
+    installMessage.innerHTML =
+      "已偵測到 <b>iPhone / iPad</b>。<br><br>" +
+      "請使用 Safari：<br>" +
+      "① 點選「分享」按鈕<br>" +
+      "② 選擇「加入主畫面」<br>" +
+      "③ 確認名稱「智慧巡檢系統」<br>" +
+      "④ 點選「加入」";
+
+    installButton.style.display =
+      "none";
+
+    continueButton.textContent =
+      "我知道了，進入智慧巡檢";
+
+    return;
+  }
+
+  // 電腦或其他裝置直接進入
+  continueToInspection();
+}
+
+
+//==================================================
+// 2-6. Android 安裝智慧巡檢系統
+//==================================================
+async function installSmartInspectionApp() {
+
+  if (
+    !deferredInstallPrompt
+  ) {
+
+    installMessage.innerHTML =
+      "目前瀏覽器尚未提供直接安裝功能。<br><br>" +
+      "請使用 Chrome 開啟此頁，" +
+      "或從瀏覽器選單選擇「安裝應用程式 / 加入主畫面」。";
+
+    return;
+  }
+
+  try {
+
+    deferredInstallPrompt.prompt();
+
+    const choice =
+      await deferredInstallPrompt
+        .userChoice;
+
+    console.log(
+      "PWA 安裝選擇：",
+      choice.outcome
+    );
+
+    if (
+      choice.outcome ===
+      "accepted"
+    ) {
+
+      installMessage.innerHTML =
+        "✅ 智慧巡檢系統已加入主畫面";
+
+      installButton.style.display =
+        "none";
+
+      setTimeout(
+        function() {
+
+          continueToInspection();
+
+        },
+        500
+      );
+
+    }
+
+    deferredInstallPrompt =
+      null;
+
+  } catch (error) {
+
+    console.error(
+      "PWA 安裝失敗",
+      error
+    );
+
+    installMessage.innerHTML =
+      "❌ 安裝流程發生錯誤。<br>" +
+      "可以先使用網頁版繼續巡檢。";
+
+  }
+}
+
+
+//==================================================
+// 2-7. 進入原本巡檢掃描流程
+//==================================================
+function continueToInspection() {
+
+  installPanel.classList.remove(
+    "show"
+  );
+
+  if (
+    deviceID &&
+    !scanning
+  ) {
+
+    startScanner();
+
+  }
+}
+
+
+//==================================================
+// 2-8. 安裝完成事件
+//==================================================
+window.addEventListener(
+  "appinstalled",
+  function() {
+
+    console.log(
+      "智慧巡檢系統已安裝完成"
+    );
+
+    installPanel.classList.remove(
+      "show"
+    );
+
+  }
+);
+
+
+//==================================================
+// 2-9. 註冊 Service Worker
+//==================================================
+async function registerServiceWorker() {
+
+  if (
+    !("serviceWorker" in navigator)
+  ) {
+
+    return;
+  }
+
+  try {
+
+    const registration =
+      await navigator
+        .serviceWorker
+        .register(
+          "./service-worker.js"
+        );
+
+    console.log(
+      "Service Worker 註冊成功",
+      registration.scope
+    );
+
+  } catch (error) {
+
+    console.warn(
+      "Service Worker 註冊失敗",
+      error
+    );
+
+  }
+}
+
+//==================================================
+// 3. 狀態變數
+//==================================================
+let html5QrCode = null;
+let scanning = false;
+let processing = false;
+
+// PERSON = 掃人員
+// SITE   = 掃站點
+let scanMode = "PERSON";
+
+let currentPersonID = "";
+let currentPersonName = "";
+let sessionExpireTime = null;
+let countdownTimer = null;
+
+
+// 本次登入成功掃描的站點紀錄
+let scannedSiteCount = 0;
+
+// 防止鏡頭一直對著同一張 QR Code 時重複送出
+let lastDecodedText = "";
+let lastDecodedAt = 0;
+
+
+//==================================================
+// 4. 顯示 Device
+//==================================================
+if (deviceID) {
+  deviceBox.textContent =
+    "目前裝置：" + deviceID;
+} else {
+  deviceBox.textContent =
+    "目前裝置：未指定";
+
+  resultBox.className =
+    "result error";
+
+  resultBox.textContent =
+    "❌ 找不到裝置編碼，請從公務機專屬入口重新進入。";
+}
+
+
+//==================================================
+// 5. JSONP 呼叫 Apps Script
+//
+// GitHub Pages 與 Apps Script 為不同網域，
+// 這裡使用 JSONP，讓頁面不用跳轉也可以收到後端結果。
+//==================================================
+function jsonpRequest(
+  requestParams,
+  timeoutMs
+) {
+
+  return new Promise(
+    function(resolve, reject) {
+
+      // 最少等待 30 秒，避免 V2 已寫入、V1 同步尚未回傳時誤報逾時
+      const timeout =
+        Math.max(
+          Number(timeoutMs) || 30000,
+          30000
+        );
+
+      const callbackName =
+        "__scannerCallback_" +
+        Date.now() +
+        "_" +
+        Math.floor(
+          Math.random() * 1000000
+        );
+
+      const script =
+        document.createElement("script");
+
+      let finished = false;
+
+      function cleanup() {
+        try {
+          delete window[callbackName];
+        } catch (error) {
+          window[callbackName] = undefined;
+        }
+
+        if (
+          script &&
+          script.parentNode
+        ) {
+          script.parentNode.removeChild(
+            script
+          );
+        }
+      }
+
+      const timer =
+        setTimeout(
+          function() {
+
+            if (finished) {
+              return;
+            }
+
+            finished = true;
+            cleanup();
+
+            reject(
+              new Error(
+                "伺服器回應逾時"
+              )
+            );
+          },
+          timeout
+        );
+
+      window[callbackName] =
+        function(data) {
+
+          if (finished) {
+            return;
+          }
+
+          finished = true;
+          clearTimeout(timer);
+          cleanup();
+          resolve(data);
+        };
+
+      const query =
+        new URLSearchParams();
+
+      Object.keys(
+        requestParams || {}
+      ).forEach(
+        function(key) {
+
+          query.set(
+            key,
+            String(
+              requestParams[key] === undefined ||
+              requestParams[key] === null
+                ? ""
+                : requestParams[key]
+            )
+          );
+        }
+      );
+
+      query.set(
+        "callback",
+        callbackName
+      );
+
+      script.src =
+        WEB_APP_URL +
+        "?" +
+        query.toString();
+
+      script.async = true;
+
+      script.onerror =
+        function() {
+
+          if (finished) {
+            return;
+          }
+
+          finished = true;
+          clearTimeout(timer);
+          cleanup();
+
+          reject(
+            new Error(
+              "無法連線 Apps Script"
+            )
+          );
+        };
+
+      document.head.appendChild(
+        script
+      );
+    }
+  );
+}
+
+
+//==================================================
+// 6. 開啟掃描器
+//==================================================
+async function startScanner() {
+
+  if (!deviceID) {
+    return;
+  }
+
+  processing = false;
+  retryButton.style.display =
+    "none";
+
+  resultBox.className =
+    "result";
+
+  resultBox.innerHTML =
+    "⏳ 正在開啟後鏡頭...";
+
+  try {
+
+    if (!html5QrCode) {
+      html5QrCode =
+        new Html5Qrcode(
+          "reader",
+          {
+            verbose: false,
+            formatsToSupport: [
+              Html5QrcodeSupportedFormats.QR_CODE
+            ]
+          }
+        );
+    }
+
+    scanning = true;
+
+    await html5QrCode.start(
+      {
+        facingMode: "environment"
+      },
+      {
+      fps: 20,
+      
+      qrbox:
+        function(
+          viewfinderWidth,
+          viewfinderHeight
+        ) {
+      
+          const minEdge =
+            Math.min(
+              viewfinderWidth,
+              viewfinderHeight
+            );
+      
+          const size =
+            Math.floor(
+              minEdge * 0.72
+            );
+      
+          return {
+            width: size,
+            height: size
+          };
+        },
+      
+      disableFlip: true,
+      aspectRatio: 1.333333
+      },
+      onScanSuccess,
+      onScanFailure
+    );
+
+    showPersonScanMode();
+
+  } catch (error) {
+
+    console.error(
+      "開啟掃描器失敗：",
+      error
+    );
+
+    scanning = false;
+
+    resultBox.className =
+      "result error";
+
+    resultBox.textContent =
+      "❌ 無法開啟相機：" +
+      (
+        error && error.message
+          ? error.message
+          : String(error)
+      );
+
+    retryButton.style.display =
+      "block";
+  }
+}
+
+
+//==================================================
+// 7. QR 掃描成功
+//==================================================
+async function onScanSuccess(
+  decodedText
+) {
+
+  if (processing) {
+    return;
+  }
+
+  const rawValue =
+    String(
+      decodedText || ""
+    ).trim();
+
+  if (!rawValue) {
+    return;
+  }
+
+  // 同一內容 2 秒內不重複處理
+  const now = Date.now();
+
+  if (
+    rawValue === lastDecodedText &&
+    now - lastDecodedAt < 800
+  ) {
+    return;
+  }
+
+  lastDecodedText = rawValue;
+  lastDecodedAt = now;
+
+  if (scanMode === "PERSON") {
+    await handlePersonScan(
+      rawValue
+    );
+    return;
+  }
+
+  if (scanMode === "SITE") {
+    await handleSiteScan(
+      rawValue
+    );
+  }
+}
+
+
+//==================================================
+// 8. 人員 QR Code
+//==================================================
+async function handlePersonScan(
+  rawValue
+) {
+
+  const personID =
+    extractCodeFromQr(
+      rawValue,
+      "user",
+      /^PS\d+$/
+    );
+
+  if (!personID) {
+
+    resultBox.className =
+      "result error";
+
+    resultBox.innerHTML =
+      "❌ 這不是有效的人員 QR Code<br>" +
+      "請重新掃描 PS 編碼";
+
+    return;
+  }
+
+  processing = true;
+
+  resultBox.className =
+    "result waiting";
+
+  resultBox.innerHTML =
+    "⏳ 已掃描人員：" +
+    escapeHtml(personID) +
+    "<br>正在建立登入 Session...";
+
+  try {
+
+    const result =
+      await jsonpRequest(
+        {
+          api: "LOGIN",
+          user: personID,
+          device: deviceID
+        },
+        15000
+      );
+
+    if (
+      !result ||
+      result.success !== true
+    ) {
+
+      throw new Error(
+        result && result.message
+          ? result.message
+          : "建立人員登入失敗"
+      );
+    }
+
+    currentPersonID =
+      String(
+        result.personID || personID
+      )
+        .trim()
+        .toUpperCase();
+
+    currentPersonName =
+      String(
+        result.personName || ""
+      ).trim();
+
+    sessionExpireTime =
+      result.expireTime
+        ? new Date(result.expireTime)
+        : null;
+
+    // 同一個 GitHub 網域保存目前狀態
+    try {
+      localStorage.setItem(
+        "currentDeviceID",
+        deviceID
+      );
+
+      localStorage.setItem(
+        "currentPersonID",
+        currentPersonID
+      );
+
+      localStorage.setItem(
+        "currentPersonName",
+        currentPersonName
+      );
+
+      localStorage.setItem(
+        "sessionExpireTime",
+        result.expireTime || ""
+      );
+    } catch (error) {
+      console.warn(
+        "localStorage 寫入失敗",
+        error
+      );
+    }
+
+   // 重新掃描人員登入成功後
+  // 清除上一輪站點掃描紀錄
+  clearSiteScanHistory();
+  
+  scanMode = "SITE";
+  processing = false;
+  
+  showSiteScanMode();
+  startCountdown();
+
+  } catch (error) {
+
+    console.error(
+      "建立人員登入失敗：",
+      error
+    );
+
+    processing = false;
+    scanMode = "PERSON";
+
+    resultBox.className =
+      "result error";
+
+    resultBox.textContent =
+      "❌ 人員登入失敗：" +
+      (
+        error && error.message
+          ? error.message
+          : String(error)
+      );
+  }
+}
+
+
+//==================================================
+// 9. 站點 QR Code
+//
+// 登入有效時間內：
+// 每成功掃描一個站點，就在下方新增一筆紀錄。
+// 不覆蓋前一筆，可持續掃描下一站。
+//==================================================
+async function handleSiteScan(
+  rawValue
+) {
+
+  //================================================
+  // 1. 必須有有效登入人員
+  //================================================
+  if (!currentPersonID) {
+    expireCurrentSession();
+    return;
+  }
+
+  //================================================
+  // 2. Session 到期就停止站點掃描
+  //================================================
+  if (
+    sessionExpireTime &&
+    !isNaN(sessionExpireTime.getTime()) &&
+    Date.now() >= sessionExpireTime.getTime()
+  ) {
+    expireCurrentSession();
+    return;
+  }
+
+
+  //================================================
+  // 3. 解析站點 QR Code
+  //================================================
+  const siteID =
+    extractCodeFromQr(
+      rawValue,
+      "code",
+      /^ST\d+$/
+    );
+
+  if (!siteID) {
+
+    resultBox.className =
+      "result error";
+
+    resultBox.innerHTML =
+      "❌ 這不是有效的站點 QR Code<br>" +
+      "請重新掃描 ST 編碼";
+
+    return;
+  }
+
+
+  //================================================
+  // 4. 暫停接受下一筆，避免同一 QR Code 重複寫入
+  //================================================
+  processing = true;
+
+  resultBox.className =
+    "result waiting";
+
+  resultBox.innerHTML =
+    "⏳ 已掃描站點：" +
+    escapeHtml(siteID) +
+    "<br>正在更新巡檢資料...";
+
+
+  try {
+
+    //================================================
+    // 5. 呼叫 Apps Script 更新站點
+    //================================================
+    const result =
+      await jsonpRequest(
+        {
+          api: "SITE",
+          code: siteID,
+          set: "1",
+          device: deviceID,
+          user: currentPersonID
+        },
+        15000
+      );
+
+
+    if (
+      !result ||
+      result.success !== true
+    ) {
+
+      throw new Error(
+        result && result.message
+          ? result.message
+          : "站點更新失敗"
+      );
+    }
+
+
+    //================================================
+    // 6. 成功後新增一筆到「本次登入掃描紀錄」
+    //
+    // 不清除舊紀錄，所以會：
+    // 📋 ST0001
+    // 📋 ST0002
+    // 📋 ST0003
+    // ...
+    // 一直往下累加
+    //================================================
+    appendSiteHistory(
+      siteID,
+      result
+    );
+
+
+    //================================================
+    // 7. 顯示本次完成訊息
+    //================================================
+    resultBox.className =
+      "result success";
+
+    resultBox.innerHTML =
+      "✅ 站點掃描完成" +
+      "<br>站點：" +
+      escapeHtml(siteID) +
+      (
+        result.siteName
+          ? "<br>名稱：" +
+            escapeHtml(result.siteName)
+          : ""
+      ) +
+      "<br><br>📷 相機保持開啟，可繼續掃描下一個站點";
+
+
+    //================================================
+    // 8. 很快恢復掃描下一站
+    //================================================
+    setTimeout(
+      function() {
+
+        processing = false;
+
+        if (scanMode === "SITE") {
+
+          resultBox.className =
+            "result";
+
+          resultBox.textContent =
+            "📍 請掃描下一個站點 QR Code";
+        }
+      },
+      700
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "站點更新失敗：",
+      error
+    );
+
+    processing = false;
+
+    resultBox.className =
+      "result error";
+
+    resultBox.textContent =
+      "❌ 站點掃描失敗：" +
+      (
+        error && error.message
+          ? error.message
+          : String(error)
+      );
+  }
+}
+
+//==================================================
+// 清除本次登入的站點掃描紀錄
+//==================================================
+function clearSiteScanHistory() {
+
+  scannedSiteCount = 0;
+
+  if (scanHistoryCount) {
+
+    scanHistoryCount.textContent =
+      "0";
+  }
+
+  if (scanHistoryList) {
+
+    scanHistoryList.innerHTML =
+      "";
+  }
+
+  if (scanHistory) {
+
+    scanHistory.classList.remove(
+      "show"
+    );
+  }
+}
+//==================================================
+// 9-1. 新增一筆站點掃描紀錄
+//
+// 顯示方式：
+// 📋 ST0001｜站點名稱
+//    00:25:36
+//
+// 每成功一筆，就 append 到最下方。
+//==================================================
+function appendSiteHistory(
+  siteID,
+  result
+) {
+
+  scannedSiteCount += 1;
+
+  scanHistory.classList.add(
+    "show"
+  );
+
+  scanHistoryCount.textContent =
+    String(
+      scannedSiteCount
+    );
+
+
+  const item =
+    document.createElement(
+      "div"
+    );
+
+  item.className =
+    "scanHistoryItem";
+
+
+  const icon =
+    document.createElement(
+      "div"
+    );
+
+  icon.className =
+    "scanHistoryIcon";
+
+  icon.textContent =
+    "📋";
+
+
+  const content =
+    document.createElement(
+      "div"
+    );
+
+  content.className =
+    "scanHistoryContent";
+
+
+  const siteName =
+    String(
+      result &&
+      result.siteName
+        ? result.siteName
+        : ""
+    ).trim();
+
+
+  const now =
+    new Date();
+
+  const timeText =
+    String(
+      now.getHours()
+    ).padStart(2, "0") +
+    ":" +
+    String(
+      now.getMinutes()
+    ).padStart(2, "0") +
+    ":" +
+    String(
+      now.getSeconds()
+    ).padStart(2, "0");
+
+
+  const main =
+    document.createElement(
+      "div"
+    );
+
+  main.className =
+    "scanHistoryMain";
+
+  main.textContent =
+    siteID +
+    (
+      siteName
+        ? "｜" + siteName
+        : ""
+    );
+
+
+  const sub =
+    document.createElement(
+      "div"
+    );
+
+  sub.className =
+    "scanHistorySub";
+
+  sub.textContent =
+    "掃描時間：" +
+    timeText +
+    "　｜　人員：" +
+    currentPersonID;
+
+
+  content.appendChild(
+    main
+  );
+
+  content.appendChild(
+    sub
+  );
+
+  item.appendChild(
+    icon
+  );
+
+  item.appendChild(
+    content
+  );
+
+  // 新掃描的站點插入最上方
+  scanHistoryList.prepend(
+    item
+  );
+
+}
+
+
+//==================================================
+// 10. QR Code 解析
+//==================================================
+function extractCodeFromQr(
+  rawValue,
+  paramName,
+  regex
+) {
+
+  let value = "";
+
+  try {
+    const url =
+      new URL(rawValue);
+
+    value =
+      String(
+        url.searchParams.get(
+          paramName
+        ) || ""
+      )
+        .trim()
+        .toUpperCase();
+
+  } catch (error) {
+
+    value =
+      String(
+        rawValue || ""
+      )
+        .trim()
+        .toUpperCase();
+  }
+
+  return regex.test(value)
+    ? value
+    : "";
+}
+
+
+//==================================================
+// 11. 切換到人員掃描模式
+//==================================================
+function showPersonScanMode() {
+
+  scanMode = "PERSON";
+
+  titleBox.textContent =
+    "📷 掃描人員 QR Code";
+
+  hintBox.innerHTML =
+    "請將人員 QR Code 對準掃描框中央。<br>" +
+    "登入成功後相機會保持開啟，直接切換站點掃描。";
+
+  resultBox.className =
+    "result";
+
+  resultBox.textContent =
+    "請將人員 QR Code 對準掃描框中央";
+}
+
+
+//==================================================
+// 12. 切換到站點掃描模式
+//==================================================
+function showSiteScanMode() {
+
+  scanMode = "SITE";
+
+  titleBox.textContent =
+    "📷 掃描站點 QR Code";
+
+  loginInfo.classList.add(
+    "show"
+  );
+
+  loginPerson.textContent =
+    "✅ 人員登入成功：" +
+    currentPersonID +
+    (
+      currentPersonName
+        ? "｜" + currentPersonName
+        : ""
+    );
+
+  hintBox.innerHTML =
+    "人員登入已完成，相機不會關閉。<br>" +
+    "請直接將站點 QR Code 對準掃描框中央。";
+
+  resultBox.className =
+    "result success";
+
+  resultBox.innerHTML =
+    "✅ 人員登入成功" +
+    "<br>人員：" +
+    escapeHtml(currentPersonID) +
+    (
+      currentPersonName
+        ? "<br>姓名：" +
+          escapeHtml(currentPersonName)
+        : ""
+    ) +
+    "<br><br>📍 現在請掃描站點 QR Code";
+}
+
+
+//==================================================
+// 13. 登入倒數
+//==================================================
+function startCountdown() {
+
+  if (countdownTimer) {
+    clearInterval(
+      countdownTimer
+    );
+  }
+
+  function updateCountdown() {
+
+    if (
+      !sessionExpireTime ||
+      isNaN(
+        sessionExpireTime.getTime()
+      )
+    ) {
+      countdown.textContent =
+        "--:--";
+      return;
+    }
+
+    let remaining =
+      sessionExpireTime.getTime() -
+      Date.now();
+
+    if (remaining <= 0) {
+      countdown.textContent =
+        "00:00";
+
+      countdown.classList.add(
+        "expired"
+      );
+
+      expireCurrentSession();
+      return;
+    }
+
+    const totalSeconds =
+      Math.floor(
+        remaining / 1000
+      );
+
+    const minutes =
+      Math.floor(
+        totalSeconds / 60
+      );
+
+    const seconds =
+      totalSeconds % 60;
+
+    countdown.textContent =
+      String(minutes)
+        .padStart(2, "0") +
+      ":" +
+      String(seconds)
+        .padStart(2, "0");
+
+    if (totalSeconds <= 60) {
+      countdown.classList.add(
+        "expired"
+      );
+    } else {
+      countdown.classList.remove(
+        "expired"
+      );
+    }
+  }
+
+  updateCountdown();
+
+  countdownTimer =
+    setInterval(
+      updateCountdown,
+      1000
+    );
+}
+
+
+//==================================================
+// 14. Session 到期
+//==================================================
+function expireCurrentSession() {
+
+  if (countdownTimer) {
+    clearInterval(
+      countdownTimer
+    );
+    countdownTimer = null;
+  }
+
+  currentPersonID = "";
+  currentPersonName = "";
+  sessionExpireTime = null;
+  processing = false;
+
+  
+  // 清除本次登入的畫面掃描紀錄
+  clearSiteScanHistory();
+
+  try {
+    localStorage.removeItem(
+      "currentPersonID"
+    );
+    localStorage.removeItem(
+      "currentPersonName"
+    );
+    localStorage.removeItem(
+      "sessionExpireTime"
+    );
+  } catch (error) {
+  }
+
+  loginInfo.classList.remove(
+    "show"
+  );
+
+  countdown.textContent =
+    "00:00";
+
+  showPersonScanMode();
+
+  resultBox.className =
+    "result error";
+
+  resultBox.innerHTML =
+    "⏰ 人員登入已到期<br>" +
+    "請重新掃描人員 QR Code";
+}
+
+
+//==================================================
+// 15. 掃描過程中的失敗
+//==================================================
+function onScanFailure(
+  error
+) {
+  // 不顯示每一幀辨識失敗，保持掃描即可。
+}
+
+
+//==================================================
+// 16. 重新啟動掃描器
+//==================================================
+async function restartScanner() {
+
+  try {
+
+    if (
+      html5QrCode &&
+      scanning
+    ) {
+      await html5QrCode.stop();
+    }
+
+  } catch (error) {
+  }
+
+  scanning = false;
+  processing = false;
+
+  document.getElementById(
+    "reader"
+  ).innerHTML = "";
+
+  html5QrCode = null;
+
+  startScanner();
+}
+
+
+//==================================================
+// 17. HTML 防呆
+//==================================================
+function escapeHtml(
+  value
+) {
+
+  return String(
+    value === undefined ||
+    value === null
+      ? ""
+      : value
+  )
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+//==================================================
+// 18. 頁面載入後直接啟動
+//==================================================
+window.addEventListener(
+  "load",
+  function() {
+
+    registerServiceWorker();
+
+    if (!deviceID) {
+
+      installPanel.classList.remove(
+        "show"
+      );
+
+      return;
+    }
+
+    // 先判斷是否需要顯示 Android / iPhone 安裝引導；
+    // 若已從主畫面 App 開啟，會直接進入掃描器。
+    checkAppInstallation();
+
+  }
+);
+
+</script>
+</body>
+</html>
