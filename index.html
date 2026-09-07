@@ -330,6 +330,360 @@
       transform: scale(0.98);
     }
 
+    /*==================================================
+      工業科技版掃描介面
+    ==================================================*/
+    :root {
+      --bg: #071014;
+      --panel: #101a1f;
+      --panel-2: #152127;
+      --line: #33444c;
+      --cyan: #18e5ef;
+      --green: #43f47e;
+      --text: #f5f8fa;
+      --muted: #a9b8bf;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      padding: max(10px, env(safe-area-inset-top)) 10px
+        max(12px, env(safe-area-inset-bottom));
+      background:
+        radial-gradient(circle at 50% 0, rgba(24, 229, 239, 0.10), transparent 34%),
+        linear-gradient(145deg, #101a1f 0%, #050a0d 56%, #0c1519 100%);
+      overflow-x: hidden;
+    }
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 520px;
+      min-height: calc(100dvh - max(22px, env(safe-area-inset-top)) - max(24px, env(safe-area-inset-bottom)));
+      margin: 0 auto;
+      padding: 0;
+      border: 1px solid #26363e;
+      border-radius: 20px;
+      overflow: hidden;
+      background: linear-gradient(160deg, rgba(19, 30, 35, 0.98), rgba(5, 10, 13, 0.99));
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.48);
+      text-align: left;
+    }
+
+    .topBar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      min-height: 66px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(135deg, #1a272d, #0c1317 70%);
+    }
+
+    .title {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      height: 100%;
+      margin: 0;
+      padding: 12px 14px;
+      color: var(--text);
+      font-size: clamp(21px, 6vw, 30px);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .title::before {
+      content: "";
+      width: 24px;
+      height: 24px;
+      margin-right: 12px;
+      border: 4px solid var(--cyan);
+      border-right-color: transparent;
+      border-bottom-color: transparent;
+      border-radius: 3px;
+      filter: drop-shadow(0 0 5px rgba(24, 229, 239, 0.45));
+      transform: rotate(0deg);
+    }
+
+    .device {
+      height: 100%;
+      margin: 0;
+      padding: 16px 15px;
+      border-left: 1px solid var(--line);
+      color: var(--text);
+      font-size: clamp(17px, 4.8vw, 23px);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .device::before {
+      content: "///";
+      margin-right: 8px;
+      color: var(--cyan);
+      font-style: italic;
+      letter-spacing: -2px;
+    }
+
+    .loginInfo {
+      display: none;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      margin: 8px 10px;
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid rgba(67, 244, 126, 0.52);
+      border-radius: 13px;
+      background: rgba(7, 22, 17, 0.84);
+      box-shadow: inset 0 0 16px rgba(67, 244, 126, 0.10), 0 0 8px rgba(67, 244, 126, 0.14);
+      color: var(--text);
+      line-height: 1.25;
+    }
+
+    .loginInfo.show {
+      display: grid;
+    }
+
+    #loginPerson {
+      min-width: 0;
+      padding: 13px 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: clamp(15px, 4.4vw, 20px);
+      font-weight: 900;
+    }
+
+    #loginPerson::before {
+      content: "✓";
+      display: inline-grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      margin-right: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      color: #05210f;
+    }
+
+    .loginTimerRow {
+      padding: 13px 12px;
+      border-left: 1px solid var(--line);
+      color: #dce6e9;
+      font-size: clamp(13px, 3.7vw, 17px);
+      white-space: nowrap;
+    }
+
+    .timer {
+      color: var(--green);
+      font-size: clamp(20px, 5.5vw, 27px);
+      text-shadow: 0 0 10px rgba(67, 244, 126, 0.30);
+    }
+
+    .scannerWrap {
+      position: relative;
+      flex: 1 1 auto;
+      width: auto;
+      max-width: none;
+      min-height: 330px;
+      height: clamp(350px, 57dvh, 680px);
+      margin: 0 10px;
+      overflow: hidden;
+      border: 1px solid #33464f;
+      border-radius: 8px;
+      background: #020506;
+      box-shadow: inset 0 0 35px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(24, 229, 239, 0.08);
+    }
+
+    #reader,
+    #reader video {
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 330px;
+      border-radius: 8px;
+    }
+
+    #reader video {
+      object-fit: cover !important;
+    }
+
+    .scanCorners {
+      position: absolute;
+      inset: 8% 7%;
+      z-index: 4;
+      pointer-events: none;
+      background:
+        linear-gradient(#fff, #fff) left top / 64px 7px no-repeat,
+        linear-gradient(#fff, #fff) left top / 7px 64px no-repeat,
+        linear-gradient(#fff, #fff) right top / 64px 7px no-repeat,
+        linear-gradient(#fff, #fff) right top / 7px 64px no-repeat,
+        linear-gradient(#fff, #fff) left bottom / 64px 7px no-repeat,
+        linear-gradient(#fff, #fff) left bottom / 7px 64px no-repeat,
+        linear-gradient(#fff, #fff) right bottom / 64px 7px no-repeat,
+        linear-gradient(#fff, #fff) right bottom / 7px 64px no-repeat;
+      filter: drop-shadow(0 0 5px rgba(255,255,255,0.42));
+    }
+
+    .torchButton {
+      position: absolute;
+      z-index: 6;
+      left: 50%;
+      bottom: 16px;
+      width: 66px;
+      height: 45px;
+      transform: translateX(-50%);
+      border: 1px solid #52636c;
+      border-radius: 28px;
+      background: rgba(5, 10, 13, 0.82);
+      color: #fff;
+      font-size: 22px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+
+    .torchButton.on {
+      border-color: var(--cyan);
+      background: rgba(12, 81, 86, 0.9);
+      box-shadow: 0 0 18px rgba(24, 229, 239, 0.35);
+    }
+
+    .result {
+      min-height: 58px;
+      margin: 10px;
+      padding: 14px 16px;
+      border: 1px solid #34474f;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #17242a, #0a1115);
+      color: #f4f7f8;
+      font-size: clamp(16px, 4.8vw, 22px);
+      line-height: 1.4;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .result::before {
+      content: "◆";
+      margin-right: 9px;
+      color: var(--cyan);
+    }
+
+    .result.waiting { background: #10232b; color: #79edf2; }
+    .result.success { background: #0b2919; color: var(--green); }
+    .result.error { background: #321517; color: #ff8b8b; }
+
+    .scanHistory {
+      display: none;
+      margin: 0 10px 10px;
+      overflow: hidden;
+      border: 1px solid #33444c;
+      border-radius: 12px;
+      background: #0c1418;
+      text-align: left;
+    }
+
+    .scanHistory.show { display: block; }
+
+    .scanHistoryTitle {
+      position: relative;
+      margin: 0;
+      padding: 15px 48px 15px 16px;
+      color: var(--text);
+      font-size: clamp(16px, 4.5vw, 20px);
+      text-align: left;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .scanHistoryTitle::after {
+      content: "⌄";
+      position: absolute;
+      right: 17px;
+      top: 50%;
+      color: #b7c5ca;
+      font-size: 28px;
+      transform: translateY(-58%);
+      transition: transform .2s ease;
+    }
+
+    .scanHistory.expanded .scanHistoryTitle::after {
+      transform: translateY(-42%) rotate(180deg);
+    }
+
+    .scanHistoryCount { color: var(--cyan); }
+
+    .scanHistoryList {
+      display: flex;
+      max-height: 74px;
+      padding: 0 10px 10px;
+      gap: 8px;
+      overflow: hidden;
+      transition: max-height .25s ease;
+    }
+
+    .scanHistory.expanded .scanHistoryList {
+      max-height: min(38dvh, 380px);
+      overflow-y: auto;
+    }
+
+    .scanHistoryItem {
+      flex: 0 0 auto;
+      padding: 11px 12px;
+      border: 1px solid #2d424a;
+      border-radius: 10px;
+      background: #111c21;
+      box-shadow: none;
+    }
+
+    .scanHistoryItem:not(:first-child) { display: none; }
+    .scanHistory.expanded .scanHistoryItem { display: flex; }
+    .scanHistoryIcon { color: var(--cyan); font-size: 21px; }
+    .scanHistoryMain { color: #f4f7f8; font-size: 16px; }
+    .scanHistorySub { color: var(--muted); font-size: 12px; }
+
+    .hint {
+      margin: 0 12px 12px;
+      color: #819198;
+      font-size: 12px;
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    .retryButton {
+      margin: 0 10px 10px;
+      width: calc(100% - 20px);
+      border: 1px solid var(--cyan);
+      background: #0c555a;
+    }
+
+    @media (max-height: 720px) {
+      .card { min-height: calc(100dvh - 16px); }
+      .topBar { min-height: 54px; }
+      .title { padding: 9px 12px; font-size: 21px; }
+      .device { padding: 12px 10px; font-size: 16px; }
+      .loginInfo { margin-top: 6px; margin-bottom: 6px; }
+      #loginPerson, .loginTimerRow { padding-top: 9px; padding-bottom: 9px; }
+      .scannerWrap { height: 52dvh; min-height: 285px; }
+      #reader, #reader video { min-height: 285px; }
+      .result { min-height: 48px; margin-top: 7px; margin-bottom: 7px; padding: 10px; }
+      .scanHistoryTitle { padding-top: 11px; padding-bottom: 11px; }
+      .hint { display: none; }
+    }
+
+    @media (max-width: 360px) {
+      body { padding-left: 5px; padding-right: 5px; }
+      .card { border-radius: 13px; }
+      .title::before { width: 19px; height: 19px; margin-right: 8px; }
+      .device::before { display: none; }
+      #loginPerson::before { width: 20px; height: 20px; margin-right: 5px; }
+      .loginTimerRow { padding-left: 8px; padding-right: 8px; }
+      .scannerWrap, .result, .scanHistory { margin-left: 6px; margin-right: 6px; }
+    }
+
   </style>
 </head>
 
@@ -382,6 +736,8 @@
 
   <div class="card">
 
+    <div class="topBar">
+
     <div
       class="title"
       id="title"
@@ -396,13 +752,15 @@
       目前裝置：讀取中...
     </div>
 
+    </div>
+
     <div
       id="loginInfo"
       class="loginInfo"
     >
       <div id="loginPerson"></div>
-      <div>
-        登入剩餘時間：
+      <div class="loginTimerRow">
+        剩餘
         <span
           id="countdown"
           class="timer"
@@ -412,6 +770,14 @@
 
     <div class="scannerWrap">
       <div id="reader"></div>
+      <div class="scanCorners" aria-hidden="true"></div>
+      <button
+        id="torchButton"
+        class="torchButton"
+        type="button"
+        aria-label="開啟或關閉手電筒"
+        onclick="toggleTorch()"
+      >⌁</button>
     </div>
 
     <div
@@ -427,8 +793,14 @@
       id="scanHistory"
       class="scanHistory"
     >
-      <div class="scanHistoryTitle">
-        📋 本次登入站點掃描紀錄
+      <div
+        class="scanHistoryTitle"
+        role="button"
+        tabindex="0"
+        onclick="toggleScanHistory()"
+        onkeydown="handleHistoryKey(event)"
+      >
+        ▤ 本次掃描
         <span
           id="scanHistoryCount"
           class="scanHistoryCount"
@@ -952,10 +1324,10 @@ let lastDecodedAt = 0;
 //==================================================
 if (deviceID) {
   deviceBox.textContent =
-    "目前裝置：" + deviceID;
+    deviceID;
 } else {
   deviceBox.textContent =
-    "目前裝置：未指定";
+    "未指定";
 
   resultBox.className =
     "result error";
@@ -1785,7 +2157,7 @@ function showPersonScanMode() {
   scanMode = "PERSON";
 
   titleBox.textContent =
-    "📷 掃描人員 QR Code";
+    "掃描人員";
 
   hintBox.innerHTML =
     "請將人員 QR Code 對準掃描框中央。<br>" +
@@ -1807,14 +2179,13 @@ function showSiteScanMode() {
   scanMode = "SITE";
 
   titleBox.textContent =
-    "📷 掃描站點 QR Code";
+    "掃描站點";
 
   loginInfo.classList.add(
     "show"
   );
 
   loginPerson.textContent =
-    "✅ 人員登入成功：" +
     currentPersonID +
     (
       currentPersonName
@@ -2013,6 +2384,90 @@ async function restartScanner() {
   html5QrCode = null;
 
   startScanner();
+}
+
+
+//==================================================
+// 16-1. 展開／收合本次掃描紀錄
+//==================================================
+function toggleScanHistory() {
+
+  if (!scanHistory) {
+    return;
+  }
+
+  scanHistory.classList.toggle(
+    "expanded"
+  );
+}
+
+
+function handleHistoryKey(event) {
+
+  if (
+    event.key === "Enter" ||
+    event.key === " "
+  ) {
+    event.preventDefault();
+    toggleScanHistory();
+  }
+}
+
+
+//==================================================
+// 16-2. 手電筒切換（裝置不支援時顯示提示）
+//==================================================
+let torchEnabled = false;
+
+async function toggleTorch() {
+
+  const torchButton =
+    document.getElementById(
+      "torchButton"
+    );
+
+  try {
+
+    if (
+      !html5QrCode ||
+      !scanning ||
+      typeof html5QrCode.applyVideoConstraints !== "function"
+    ) {
+      throw new Error("目前相機尚未啟動");
+    }
+
+    torchEnabled = !torchEnabled;
+
+    await html5QrCode.applyVideoConstraints({
+      advanced: [{
+        torch: torchEnabled
+      }]
+    });
+
+    if (torchButton) {
+      torchButton.classList.toggle(
+        "on",
+        torchEnabled
+      );
+      torchButton.textContent =
+        torchEnabled ? "●" : "⌁";
+    }
+
+  } catch (error) {
+
+    torchEnabled = false;
+
+    if (torchButton) {
+      torchButton.classList.remove("on");
+      torchButton.textContent = "⌁";
+    }
+
+    resultBox.className =
+      "result error";
+
+    resultBox.textContent =
+      "此手機或瀏覽器不支援手電筒切換";
+  }
 }
 
 
