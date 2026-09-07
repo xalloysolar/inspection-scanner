@@ -1729,23 +1729,11 @@ function appendSiteHistory(
     content
   );
 
-  scanHistoryList.appendChild(
+  // 新掃描的站點插入最上方
+  scanHistoryList.prepend(
     item
   );
 
-
-  // 最新一筆自動捲到可見位置
-  try {
-
-    item.scrollIntoView(
-      {
-        behavior: "smooth",
-        block: "nearest"
-      }
-    );
-
-  } catch (error) {
-  }
 }
 
 
