@@ -576,26 +576,6 @@
     .result.success { background: #0b2919; color: var(--green); }
     .result.error { background: #321517; color: #ff8b8b; }
 
-    .adminTiming {
-      margin-top: 10px;
-      padding: 10px 12px;
-      border: 1px solid rgba(121, 237, 242, 0.35);
-      border-radius: 9px;
-      background: rgba(7, 20, 25, 0.75);
-      color: #b9f8fb;
-      font-size: clamp(12px, 3.5vw, 15px);
-      line-height: 1.55;
-      font-weight: 700;
-      text-align: left;
-    }
-
-    .adminTimingTitle {
-      margin-bottom: 4px;
-      color: #ffffff;
-      font-weight: 900;
-      text-align: center;
-    }
-
     .scanHistory {
       display: none;
       margin: 0 10px 10px;
@@ -1861,10 +1841,6 @@ async function handleSiteScan(
     //================================================
     // 5. 呼叫 Apps Script 更新站點
     //================================================
-    // PS0021 管理員專用：量測手機送出請求至收到結果的完整時間。
-    // 即使後端未回傳 timing，也一定能在畫面上看到本次總耗時。
-    const requestStartedAt = Date.now();
-
     const result =
       await jsonpRequest(
         {
@@ -1876,9 +1852,6 @@ async function handleSiteScan(
         },
         15000
       );
-
-    const requestElapsedMs =
-      Date.now() - requestStartedAt;
 
 
     if (
@@ -1911,51 +1884,6 @@ async function handleSiteScan(
 
 
     //================================================
-    // PS0021 管理員專用：後端分段執行時間
-    // 其他人員的 result.timing 為 null，不會建立此區塊。
-    //================================================
-    const isAdmin =
-      String(currentPersonID || "")
-        .trim()
-        .toUpperCase() === "PS0021";
-
-    const timing =
-      result && result.timing
-        ? result.timing
-        : null;
-
-    function secondsText(value) {
-
-      const milliseconds = Number(value);
-
-      return Number.isFinite(milliseconds)
-        ? (milliseconds / 1000).toFixed(2) + " 秒"
-        : "--";
-    }
-
-    const timingHtml =
-      isAdmin
-        ? '<div class="adminTiming">' +
-          '<div class="adminTimingTitle">⏱ 管理員執行時間</div>' +
-          '本次總耗時：' + secondsText(requestElapsedMs) + '<br>' +
-          (
-            timing
-              ? '後端總計：' + secondsText(timing.totalMs) + '<br>' +
-                '鎖等待：' + secondsText(timing.lockWaitMs) + '<br>' +
-                '登入驗證：' + secondsText(timing.sessionCheckMs) + '<br>' +
-                '站點查詢：' + secondsText(timing.siteLookupMs) + '<br>' +
-                '人員查詢：' + secondsText(timing.personLookupMs) + '<br>' +
-                '工作表取得：' + secondsText(timing.sheetLookupMs) + '<br>' +
-                'V2 查找：' + secondsText(timing.v2ReadFindMs) + '<br>' +
-                'V2 寫入：' + secondsText(timing.v2WriteMs) + '<br>' +
-                'V1 同步：' + secondsText(timing.v1SyncMs)
-              : '後端分段時間：尚未收到（請確認 SITE API 是否保留 timing）'
-          ) +
-          '</div>'
-        : "";
-
-
-    //================================================
     // 7. 顯示本次完成訊息
     //================================================
     resultBox.className =
@@ -1971,7 +1899,6 @@ async function handleSiteScan(
             escapeHtml(result.siteName)
           : ""
       ) +
-      timingHtml +
       "<br><br>📷 相機保持開啟，可繼續掃描下一個站點";
 
 
@@ -1983,10 +1910,7 @@ async function handleSiteScan(
 
         processing = false;
 
-        if (
-          scanMode === "SITE" &&
-          !isAdmin
-        ) {
+        if (scanMode === "SITE") {
 
           resultBox.className =
             "result";
