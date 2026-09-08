@@ -1706,7 +1706,8 @@ async function handlePersonScan(
       result.isAdmin === true ||
       result.isManager === true ||
       result.role === "ADMIN" ||
-      result.role === "MANAGER";
+      result.role === "MANAGER" ||
+      currentPersonName === "管理員";
 
     sessionExpireTime =
       result.expireTime
@@ -2124,6 +2125,12 @@ function appendSiteHistory(
   main.textContent = mainText;
 
 
+  content.appendChild(
+    main
+  );
+
+  // 所有人都保留第二行的掃描時間與人員資訊。
+  // 管理員僅在第一行額外顯示總耗時。
   const sub =
     document.createElement(
       "div"
@@ -2132,20 +2139,11 @@ function appendSiteHistory(
   sub.className =
     "scanHistorySub";
 
-  // 管理員已在主列顯示總耗時，避免再出現大型計時區塊。
-  // 一般人員維持原本的掃描時間與人員資訊。
   sub.textContent =
-    currentPersonIsAdmin
-      ? "掃描時間：" + timeText
-      : "掃描時間：" +
-        timeText +
-        "　｜　人員：" +
-        currentPersonID;
-
-
-  content.appendChild(
-    main
-  );
+    "掃描時間：" +
+    timeText +
+    "　｜　人員：" +
+    currentPersonID;
 
   content.appendChild(
     sub
