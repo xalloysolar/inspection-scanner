@@ -1603,15 +1603,15 @@ async function onScanSuccess(
   }
 
   // 同一內容 2 秒內不重複處理
+  // 同一張 QR Code 在上次完成後 5 秒內不重複處理
   const now = Date.now();
 
   if (
     rawValue === lastDecodedText &&
-    now - lastDecodedAt < 800
+    now - lastDecodedAt < 5000
   ) {
     return;
   }
-
   lastDecodedText = rawValue;
   lastDecodedAt = now;
 
@@ -1916,7 +1916,8 @@ async function handleSiteScan(
           : ""
       ) +
       "<br><br>📷 相機保持開啟，可繼續掃描下一個站點";
-
+     // 從後端完成時間開始計算同站點防重複時間
+      lastDecodedAt = Date.now();
 
     //================================================
     // 8. 很快恢復掃描下一站
