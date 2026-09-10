@@ -1092,29 +1092,14 @@ function checkAppInstallation() {
     os
   );
 
-  // Android
+
+  // Android：直接進入巡檢，不顯示安裝提示
   if (
     os === "ANDROID"
   ) {
-
-    installPanel.classList.add(
-      "show"
-    );
-
-    installMessage.innerHTML =
-      "已偵測到 <b>Android</b> 手機。<br><br>" +
-      "建議將「智慧巡檢系統」安裝到手機主畫面，" +
-      "之後可直接點桌面圖示進入巡檢。";
-
-    installButton.style.display =
-      "block";
-
-    installButton.textContent =
-      "📱 安裝智慧巡檢系統";
-
-    continueButton.textContent =
-      "先使用網頁版";
-
+  
+    continueToInspection();
+  
     return;
   }
 
