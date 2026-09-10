@@ -979,6 +979,8 @@ const continueButton =
 
 let deferredInstallPrompt =
   null;
+
+
 //==================================================
 // 2-2. Android / Chromium 安裝事件
 //==================================================
@@ -1094,18 +1096,7 @@ function checkAppInstallation() {
   if (
     os === "ANDROID"
   ) {
-    const dismissed =
-          localStorage.getItem(
-            ANDROID_INSTALL_GUIDE_DISMISSED_KEY
-          ) === "1";
-    
-        if (dismissed) {
-    
-          continueToInspection(false);
-    
-          return;
-    
-        }
+
     installPanel.classList.add(
       "show"
     );
