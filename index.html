@@ -726,7 +726,7 @@
         id="continueButton"
         class="continueButton"
         type="button"
-        onclick="continueToInspection()"
+        onclick="continueToInspection(true)"
       >
         先使用網頁版
       </button>
@@ -980,7 +980,8 @@ const continueButton =
 let deferredInstallPrompt =
   null;
 
-
+const ANDROID_INSTALL_GUIDE_DISMISSED_KEY =
+  "ANDROID_INSTALL_GUIDE_DISMISSED_V1";
 //==================================================
 // 2-2. Android / Chromium 安裝事件
 //==================================================
@@ -1096,7 +1097,18 @@ function checkAppInstallation() {
   if (
     os === "ANDROID"
   ) {
-
+    const dismissed =
+          localStorage.getItem(
+            ANDROID_INSTALL_GUIDE_DISMISSED_KEY
+          ) === "1";
+    
+        if (dismissed) {
+    
+          continueToInspection(false);
+    
+          return;
+    
+        }
     installPanel.classList.add(
       "show"
     );
@@ -1222,21 +1234,18 @@ async function installSmartInspectionApp() {
 //==================================================
 // 2-7. 進入原本巡檢掃描流程
 //==================================================
-function continueToInspection() {
+function continueToInspection(
+  rememberAndroidChoice
+) {
 
-  installPanel.classList.remove(
-    "show"
-  );
+  if (rememberAndroidChoice === true) {
 
-  if (
-    deviceID &&
-    !scanning
-  ) {
-
-    startScanner();
+    localStorage.setItem(
+      ANDROID_INSTALL_GUIDE_DISMISSED_KEY,
+      "1"
+    );
 
   }
-}
 
 
 //==================================================
