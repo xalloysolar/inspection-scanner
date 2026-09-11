@@ -1979,13 +1979,17 @@ function clearSiteScanHistory() {
 // 顯示方式：
 // 📋 ST0001｜站點名稱｜總耗時：7.36 秒（僅管理員）
 //    一般人員維持：掃描時間｜人員
+//  ST0053｜沉降槽PT9｜總耗時：13.75 秒
+//掃描時間：23:53:00｜人員：PS0021
+//⏱ 登入：0.10 秒｜站點主檔：2.40 秒
+// 人員主檔：0.80 秒｜今日表：9.80 秒｜寫入：0.50 秒
 //
 // 每成功一筆，就 append 到最下方。
 //==================================================
 function appendSiteHistory(
   siteID,
   result
-) {
+  ) {
 
   scannedSiteCount += 1;
 
@@ -2063,6 +2067,7 @@ function appendSiteHistory(
   main.className =
     "scanHistoryMain";
 
+
   let mainText =
     siteID +
     (
@@ -2071,12 +2076,22 @@ function appendSiteHistory(
         : ""
     );
 
+
+  // 僅 PS0021 顯示後端分段時間
+  const showTimingDetails =
+    currentPersonID === "PS0021";
+
+  let timingDetailText = "";
+
+
   if (currentPersonIsAdmin) {
 
     const backendTiming =
-      result && result.timing
+      result &&
+      result.timing
         ? result.timing
         : {};
+
 
     const secondsValue =
       result && (
@@ -2086,6 +2101,7 @@ function appendSiteHistory(
         result.clientElapsedSeconds
       );
 
+
     const millisecondsValue =
       result && (
         result.totalMs ||
@@ -2094,29 +2110,87 @@ function appendSiteHistory(
         backendTiming.elapsedMs
       );
 
+
     const totalSeconds =
-      Number.isFinite(Number(secondsValue))
+      Number.isFinite(
+        Number(secondsValue)
+      )
         ? Number(secondsValue)
         : Number(millisecondsValue) / 1000;
 
-    if (Number.isFinite(totalSeconds)) {
+
+    if (
+      Number.isFinite(
+        totalSeconds
+      )
+    ) {
 
       mainText +=
         "｜總耗時：" +
         totalSeconds.toFixed(2) +
         " 秒";
+
     }
+
+
+    //================================================
+    // PS0021：顯示後端每一段執行時間
+    //================================================
+    if (showTimingDetails) {
+
+      const formatMsToSeconds =
+        function(value) {
+
+          const milliseconds =
+            Number(value);
+
+          return Number.isFinite(
+            milliseconds
+          )
+            ? (milliseconds / 1000).toFixed(2)
+            : "-";
+
+        };
+
+
+      timingDetailText =
+        "登入：" +
+        formatMsToSeconds(
+          backendTiming.sessionMs
+        ) +
+        " 秒｜站點主檔：" +
+        formatMsToSeconds(
+          backendTiming.siteDbMs
+        ) +
+        " 秒<br>" +
+        "人員主檔：" +
+        formatMsToSeconds(
+          backendTiming.personDbMs
+        ) +
+        " 秒｜今日表：" +
+        formatMsToSeconds(
+          backendTiming.todaySheetMs
+        ) +
+        " 秒｜寫入：" +
+        formatMsToSeconds(
+          backendTiming.writeMs
+        ) +
+        " 秒";
+
+    }
+
   }
 
-  main.textContent = mainText;
+
+  main.textContent =
+    mainText;
 
 
   content.appendChild(
     main
   );
 
-  // 所有人都保留第二行的掃描時間與人員資訊。
-  // 管理員僅在第一行額外顯示總耗時。
+
   const sub =
     document.createElement(
       "div"
@@ -2125,15 +2199,28 @@ function appendSiteHistory(
   sub.className =
     "scanHistorySub";
 
-  sub.textContent =
+
+  sub.innerHTML =
     "掃描時間：" +
-    timeText +
+    escapeHtml(
+      timeText
+    ) +
     "　｜　人員：" +
-    currentPersonID;
+    escapeHtml(
+      currentPersonID
+    ) +
+    (
+      timingDetailText
+        ? "<br>⏱ " +
+          timingDetailText
+        : ""
+    );
+
 
   content.appendChild(
     sub
   );
+
 
   item.appendChild(
     icon
@@ -2143,13 +2230,13 @@ function appendSiteHistory(
     content
   );
 
+
   // 新掃描的站點插入最上方
   scanHistoryList.prepend(
     item
   );
 
 }
-
 
 //==================================================
 // 10. QR Code 解析
