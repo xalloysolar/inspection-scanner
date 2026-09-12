@@ -411,11 +411,17 @@
       transform: rotate(0deg);
     }
 
+    .devicePanel {
+      height: 100%;
+      padding: 10px 15px;
+      border-left: 1px solid var(--line);
+      text-align: right;
+    }
+
     .device {
       height: 100%;
       margin: 0;
-      padding: 16px 15px;
-      border-left: 1px solid var(--line);
+      padding: 0;
       color: var(--text);
       font-size: clamp(17px, 4.8vw, 23px);
       font-weight: 900;
@@ -428,6 +434,14 @@
       color: var(--cyan);
       font-style: italic;
       letter-spacing: -2px;
+    }
+
+    .systemVersion {
+      margin-top: 4px;
+      color: #6f8da1;
+      font-size: clamp(10px, 2.8vw, 14px);
+      font-weight: 700;
+      letter-spacing: 0.4px;
     }
 
     .loginInfo {
@@ -664,7 +678,9 @@
       .card { min-height: calc(100dvh - 16px); }
       .topBar { min-height: 54px; }
       .title { padding: 9px 12px; font-size: 21px; }
-      .device { padding: 12px 10px; font-size: 16px; }
+      .devicePanel { padding: 8px 10px; }
+      .device { font-size: 16px; }
+      .systemVersion { margin-top: 2px; }
       .loginInfo { margin-top: 6px; margin-bottom: 6px; }
       #loginPerson, .loginTimerRow { padding-top: 9px; padding-bottom: 9px; }
       .scannerWrap { height: 52dvh; min-height: 285px; }
@@ -745,11 +761,18 @@
       📷 掃描人員 QR Code
     </div>
 
-    <div
-      id="device"
-      class="device"
-    >
-      目前裝置：讀取中...
+    <div class="devicePanel">
+      <div
+        id="device"
+        class="device"
+      >
+        目前裝置：讀取中...
+      </div>
+
+      <div
+        id="systemVersion"
+        class="systemVersion"
+      ></div>
     </div>
 
     </div>
@@ -833,6 +856,14 @@
   </div>
 
 <script>
+//==================================================
+// 智慧巡檢系統版本
+// 日後更新版本時，只需修改下一行
+//==================================================
+const SYSTEM_VERSION =
+  "V2.0.0";
+
+
 //==================================================
 // Apps Script Web App
 //==================================================
@@ -922,6 +953,9 @@ const titleBox =
 
 const deviceBox =
   document.getElementById("device");
+
+const systemVersionBox =
+  document.getElementById("systemVersion");
 
 const resultBox =
   document.getElementById("result");
@@ -1309,6 +1343,10 @@ let lastDecodedAt = 0;
 //==================================================
 // 4. 顯示 Device
 //==================================================
+systemVersionBox.textContent =
+  SYSTEM_VERSION;
+
+
 if (deviceID) {
   deviceBox.textContent =
     deviceID;
