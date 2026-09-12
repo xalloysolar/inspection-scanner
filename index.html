@@ -381,6 +381,7 @@
       grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
       min-height: 82px;
+      position: relative;
       border-bottom: 1px solid var(--line);
       background: linear-gradient(135deg, #1a272d, #0c1317 70%);
     }
@@ -435,14 +436,17 @@
       font-style: italic;
       letter-spacing: -2px;
     }
-
-    .systemVersion {
-      margin-top: 4px;
-      color: #6f8da1;
-      font-size: clamp(10px, 2.8vw, 14px);
-      font-weight: 700;
-      letter-spacing: 0.4px;
-    }
+  
+     .systemVersion {
+    position: absolute;
+    right: 15px;
+    bottom: 8px;
+    margin-top: 0;
+    color: #6f8da1;
+    font-size: clamp(10px, 2.8vw, 14px);
+    font-weight: 700;
+    letter-spacing: 0.4px;
+  }
 
     .loginInfo {
       display: none;
