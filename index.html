@@ -412,11 +412,14 @@
       transform: rotate(0deg);
     }
 
-    .devicePanel {
+       .devicePanel {
       height: 100%;
-      padding: 10px 15px;
+      padding: 0 15px;
       border-left: 1px solid var(--line);
       text-align: right;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
     }
 
     .device {
@@ -853,7 +856,7 @@
       id="hint"
       class="hint"
     >
-      請將人員 QR Code 對準掃描框中央。<br>
+      將人員 QR Code 對準掃描框。<br>
       掃描登入成功後，相機不會關閉，會直接切換為站點掃描。
     </div>
 
