@@ -430,6 +430,7 @@
       font-size: clamp(17px, 4.8vw, 23px);
       font-weight: 900;
       white-space: nowrap;
+      transform: translateY(12px);
     }
 
     .device::before {
@@ -706,7 +707,10 @@
       .loginTimerRow { padding-left: 8px; padding-right: 8px; }
       .scannerWrap, .result, .scanHistory { margin-left: 6px; margin-right: 6px; }
     }
-
+  .topBar #device {
+    position: relative !important;
+    top: 14px !important;
+  }
   </style>
 </head>
 
