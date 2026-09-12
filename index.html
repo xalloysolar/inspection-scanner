@@ -709,7 +709,7 @@
     }
   .topBar #device {
     position: relative !important;
-    top: 14px !important;
+    top: 10px !important;
   }
   </style>
 </head>
@@ -2338,14 +2338,14 @@ function showPersonScanMode() {
     "掃描人員";
 
   hintBox.innerHTML =
-    "請將人員 QR Code 對準掃描框中央。<br>" +
+    "將人員 QR Code 對準掃描框。<br>" +
     "登入成功後相機會保持開啟，直接切換站點掃描。";
 
   resultBox.className =
     "result";
 
   resultBox.textContent =
-    "請將人員 QR Code 對準掃描框中央";
+    "將人員 QR Code 對準掃描框。";
 }
 
 
@@ -2373,7 +2373,7 @@ function showSiteScanMode() {
 
   hintBox.innerHTML =
     "人員登入已完成，相機不會關閉。<br>" +
-    "請直接將站點 QR Code 對準掃描框中央。";
+    "將站點 QR Code 對準掃描框。";
 
   resultBox.className =
     "result success";
