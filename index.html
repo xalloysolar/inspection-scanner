@@ -1374,9 +1374,6 @@ if (deviceID) {
 
 //==================================================
 // 5. JSONP 呼叫 Apps Script
-//
-// GitHub Pages 與 Apps Script 為不同網域，
-// 這裡使用 JSONP，讓頁面不用跳轉也可以收到後端結果。
 //==================================================
 function jsonpRequest(
   requestParams,
@@ -1386,7 +1383,9 @@ function jsonpRequest(
   return new Promise(
     function(resolve, reject) {
 
-      // 最少等待 30 秒，避免 V2 已寫入、V1 同步尚未回傳時誤報逾時
+      const requestStartedAt =
+        performance.now();
+
       const timeout =
         Math.max(
           Number(timeoutMs) || 30000,
@@ -1407,10 +1406,12 @@ function jsonpRequest(
       let finished = false;
 
       function cleanup() {
+
         try {
           delete window[callbackName];
         } catch (error) {
-          window[callbackName] = undefined;
+          window[callbackName] =
+            undefined;
         }
 
         if (
@@ -1452,6 +1453,16 @@ function jsonpRequest(
 
           finished = true;
           clearTimeout(timer);
+
+          // 此欄位就是手機送出 JSONP 到收到回應的實際秒數。
+          if (data && typeof data === "object") {
+            data.clientJsonpSeconds =
+              (
+                performance.now() -
+                requestStartedAt
+              ) / 1000;
+          }
+
           cleanup();
           resolve(data);
         };
@@ -1512,7 +1523,6 @@ function jsonpRequest(
     }
   );
 }
-
 
 //==================================================
 // 6. 開啟掃描器
@@ -1811,26 +1821,20 @@ async function handlePersonScan(
 
 //==================================================
 // 9. 站點 QR Code
-//
-// 登入有效時間內：
-// 每成功掃描一個站點，就在下方新增一筆紀錄。
-// 不覆蓋前一筆，可持續掃描下一站。
 //==================================================
 async function handleSiteScan(
   rawValue
 ) {
 
-  //================================================
-  // 1. 必須有有效登入人員
-  //================================================
+  if (processing) {
+    return;
+  }
+
   if (!currentPersonID) {
     expireCurrentSession();
     return;
   }
 
-  //================================================
-  // 2. Session 到期就停止站點掃描
-  //================================================
   if (
     sessionExpireTime &&
     !isNaN(sessionExpireTime.getTime()) &&
@@ -1840,10 +1844,6 @@ async function handleSiteScan(
     return;
   }
 
-
-  //================================================
-  // 3. 解析站點 QR Code
-  //================================================
   const siteID =
     extractCodeFromQr(
       rawValue,
@@ -1852,7 +1852,6 @@ async function handleSiteScan(
     );
 
   if (!siteID) {
-
     resultBox.className =
       "result error";
 
@@ -1863,11 +1862,9 @@ async function handleSiteScan(
     return;
   }
 
-
-  //================================================
-  // 4. 暫停接受下一筆，避免同一 QR Code 重複寫入
-  //================================================
+  // QR 一辨識到就先鎖住，避免同一個 QR Code 連續送出。
   processing = true;
+  lastDecodedAt = Date.now();
 
   resultBox.className =
     "result waiting";
@@ -1877,13 +1874,10 @@ async function handleSiteScan(
     escapeHtml(siteID) +
     "<br>正在更新巡檢資料...";
 
+  const siteRequestStartedAt =
+    performance.now();
 
   try {
-
-    //================================================
-  // 5. 呼叫 Apps Script 更新站點
-  //================================================
-    const siteRequestStartedAt = performance.now();
 
     const result =
       await jsonpRequest(
@@ -1892,22 +1886,24 @@ async function handleSiteScan(
           code: siteID,
           set: "1",
           device: deviceID,
-          user: currentPersonID
+          user: currentPersonID,
+
+          // 每次網址不同，避免瀏覽器使用舊 JSONP 快取。
+          _: Date.now()
         },
-        15000
+        30000
       );
 
-    // API 若未提供後端 totalSeconds，管理員畫面就以本次 API
-    // 實際往返時間補上，確保掃描紀錄仍能顯示總耗時。
     result.clientElapsedSeconds =
-      (performance.now() - siteRequestStartedAt) / 1000;
-
+      (
+        performance.now() -
+        siteRequestStartedAt
+      ) / 1000;
 
     if (
       !result ||
       result.success !== true
     ) {
-
       throw new Error(
         result && result.message
           ? result.message
@@ -1915,26 +1911,11 @@ async function handleSiteScan(
       );
     }
 
-
-    //================================================
-    // 6. 成功後新增一筆到「本次登入掃描紀錄」
-    //
-    // 不清除舊紀錄，所以會：
-    // 📋 ST0001
-    // 📋 ST0002
-    // 📋 ST0003
-    // ...
-    // 一直往下累加
-    //================================================
     appendSiteHistory(
       siteID,
       result
     );
 
-
-    //================================================
-    // 7. 顯示本次完成訊息
-    //================================================
     resultBox.className =
       "result success";
 
@@ -1949,29 +1930,6 @@ async function handleSiteScan(
           : ""
       ) +
       "<br><br>📷 相機保持開啟，可繼續掃描下一個站點";
-     // 從後端完成時間開始計算同站點防重複時間
-      lastDecodedAt = Date.now();
-
-    //================================================
-    // 8. 很快恢復掃描下一站
-    //================================================
-    setTimeout(
-      function() {
-
-        processing = false;
-
-        if (scanMode === "SITE") {
-
-          resultBox.className =
-            "result";
-
-          resultBox.textContent =
-            "📍 請掃描下一個站點 QR Code";
-        }
-      },
-      700
-    );
-
 
   } catch (error) {
 
@@ -1979,8 +1937,6 @@ async function handleSiteScan(
       "站點更新失敗：",
       error
     );
-
-    processing = false;
 
     resultBox.className =
       "result error";
@@ -1992,6 +1948,25 @@ async function handleSiteScan(
           ? error.message
           : String(error)
       );
+
+  } finally {
+
+    // 不論成功或失敗，短暫防連掃後都恢復下一站掃描。
+    setTimeout(
+      function() {
+
+        processing = false;
+
+        if (scanMode === "SITE") {
+          resultBox.className =
+            "result";
+
+          resultBox.textContent =
+            "📍 請掃描下一個站點 QR Code";
+        }
+      },
+      700
+    );
   }
 }
 
