@@ -872,7 +872,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.1.4";
+  "V3.2.4";
 
 
 //==================================================
@@ -2253,48 +2253,85 @@ function appendSiteHistory(
     //================================================
     // PS0021：顯示後端每一段執行時間
     //================================================
-    if (showTimingDetails) {
+     if (showTimingDetails) {
 
-      const formatMsToSeconds =
-        function(value) {
+    const formatMsToSeconds =
+      function(value) {
 
-          const milliseconds =
-            Number(value);
+        const milliseconds =
+          Number(value);
 
-          return Number.isFinite(
-            milliseconds
+        return Number.isFinite(
+          milliseconds
+        )
+          ? (milliseconds / 1000).toFixed(2)
+          : "-";
+
+      };
+
+
+    const backendTotalSeconds =
+      Number.isFinite(
+        Number(millisecondsValue)
+      )
+        ? Number(millisecondsValue) / 1000
+        : NaN;
+
+    const apiWaitSeconds =
+      Number.isFinite(totalSeconds) &&
+      Number.isFinite(backendTotalSeconds)
+        ? Math.max(
+            0,
+            totalSeconds -
+            backendTotalSeconds
           )
-            ? (milliseconds / 1000).toFixed(2)
-            : "-";
+        : NaN;
 
-        };
+    const formatSeconds =
+      function(value) {
+
+        return Number.isFinite(
+          Number(value)
+        )
+          ? Number(value).toFixed(2)
+          : "-";
+      };
 
 
-      timingDetailText =
-        "登入：" +
-        formatMsToSeconds(
-          backendTiming.sessionMs
-        ) +
-        " 秒｜站點主檔：" +
-        formatMsToSeconds(
-          backendTiming.siteDbMs
-        ) +
-        " 秒<br>" +
-        "人員主檔：" +
-        formatMsToSeconds(
-          backendTiming.personDbMs
-        ) +
-        " 秒｜今日表：" +
-        formatMsToSeconds(
-          backendTiming.todaySheetMs
-        ) +
-        " 秒｜寫入：" +
-        formatMsToSeconds(
-          backendTiming.writeMs
-        ) +
-        " 秒";
+    timingDetailText =
+      "後端合計：" +
+      formatSeconds(
+        backendTotalSeconds
+      ) +
+      " 秒｜API 等待：" +
+      formatSeconds(
+        apiWaitSeconds
+      ) +
+      " 秒<br>" +
+      "登入：" +
+      formatMsToSeconds(
+        backendTiming.sessionMs
+      ) +
+      " 秒｜站點主檔：" +
+      formatMsToSeconds(
+        backendTiming.siteDbMs
+      ) +
+      " 秒<br>" +
+      "人員主檔：" +
+      formatMsToSeconds(
+        backendTiming.personDbMs
+      ) +
+      " 秒｜今日表：" +
+      formatMsToSeconds(
+        backendTiming.todaySheetMs
+      ) +
+      " 秒｜寫入：" +
+      formatMsToSeconds(
+        backendTiming.writeMs
+      ) +
+      " 秒";
 
-    }
+  }
 
   }
 
