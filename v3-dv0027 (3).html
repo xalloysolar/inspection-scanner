@@ -872,7 +872,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.2.4";
+  "V3.3.4";
 
 
 //==================================================
@@ -1354,7 +1354,9 @@ let scannedSiteCount = 0;
 // 防止鏡頭一直對著同一張 QR Code 時重複送出
 let lastDecodedText = "";
 let lastDecodedAt = 0;
-
+// 同一站點 QR Code 未移開前，不允許重複送出掃描請求。
+let lastHandledSiteRawValue = "";
+let lastSiteQrSeenAt = 0;
 
 //==================================================
 // 4. 顯示 Device
@@ -1691,10 +1693,6 @@ async function onScanSuccess(
   decodedText
 ) {
 
-  if (processing) {
-    return;
-  }
-
   const rawValue =
     String(
       decodedText || ""
@@ -1704,8 +1702,23 @@ async function onScanSuccess(
     return;
   }
 
-  // 同一內容 2 秒內不重複處理
-  // 同一張 QR Code 在上次完成後 5 秒內不重複處理
+  // 鏡頭仍持續看到站點 QR Code 時，記錄最後看見時間。
+  if (scanMode === "SITE") {
+    lastSiteQrSeenAt = Date.now();
+  }
+
+  if (processing) {
+    return;
+  }
+
+  // 同一張站點 QR Code 沒有移開前，永遠不重複送出。
+  if (
+    scanMode === "SITE" &&
+    rawValue === lastHandledSiteRawValue
+  ) {
+    return;
+  }
+
   const now = Date.now();
 
   if (
@@ -1714,20 +1727,21 @@ async function onScanSuccess(
   ) {
     return;
   }
+
   lastDecodedText = rawValue;
   lastDecodedAt = now;
 
   if (scanMode === "PERSON") {
-    await handlePersonScan(
-      rawValue
-    );
+    await handlePersonScan(rawValue);
     return;
   }
 
   if (scanMode === "SITE") {
-    await handleSiteScan(
-      rawValue
-    );
+
+    // 先鎖住此 QR Code；成功、失敗或逾時都不會連續重送。
+    lastHandledSiteRawValue = rawValue;
+
+    await handleSiteScan(rawValue);
   }
 }
 
@@ -2637,7 +2651,16 @@ function expireCurrentSession() {
 function onScanFailure(
   error
 ) {
-  // 不顯示每一幀辨識失敗，保持掃描即可。
+
+  // 鏡頭已超過 1 秒沒有看見 QR Code，
+  // 表示使用者已移開，可允許再次掃同一站點。
+  if (
+    scanMode === "SITE" &&
+    lastHandledSiteRawValue &&
+    Date.now() - lastSiteQrSeenAt > 1000
+  ) {
+    lastHandledSiteRawValue = "";
+  }
 }
 
 
