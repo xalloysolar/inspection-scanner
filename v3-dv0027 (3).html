@@ -883,7 +883,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.4.5";
+  "V3.4.6";
 
 
 //==================================================
@@ -911,6 +911,10 @@ const nfcLinkSiteID =
     .match(/^ST\d+$/)
       ? String(params.get("site") || params.get("code")).trim().toUpperCase()
       : "";
+
+// NFC 網址帶入的站點只允許在本次頁面載入時使用一次。
+// 切換 QR／NFC 或重新開相機時，不得再次送出同一站點。
+let pendingNfcSiteID = nfcLinkSiteID;
 
 // GitHub Pages 版本不使用 Apps Script 範本注入；
 // 裝置編碼由網址的 ?device=DV0027 讀取。
@@ -1428,8 +1432,20 @@ function restoreSiteScanHistory() {
 }
 
 function processNfcLinkSite() {
-  if (!nfcLinkSiteID || !currentPersonID || processing) return;
-  setTimeout(function() { handleSiteScan(nfcLinkSiteID); }, 300);
+  if (!pendingNfcSiteID || !currentPersonID || processing) return;
+
+  const siteID = pendingNfcSiteID;
+  pendingNfcSiteID = "";
+
+  try {
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete("site");
+    cleanUrl.searchParams.delete("code");
+    window.history.replaceState({}, "", cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+  } catch (error) {
+  }
+
+  setTimeout(function() { handleSiteScan(siteID); }, 300);
 }
 
 // iPhone 在 QR 相機持續使用中時，系統 NFC 網址通知可能不會出現。
