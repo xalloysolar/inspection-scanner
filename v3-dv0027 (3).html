@@ -883,7 +883,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.4.3";
+  "V3.4.4";
 
 
 //==================================================
@@ -1293,6 +1293,19 @@ function continueToInspection() {
     startScanner();
 
   }
+}
+
+// NFC 網址已含 site=STxxxx 時，不顯示 iPhone「加入主畫面」導引。
+// 已有 Safari Session 就直接寫入站點；首次使用才開相機掃人員。
+function continueNfcLinkInspection() {
+  installPanel.classList.remove("show");
+  if (!restoreSavedSession()) {
+    startScanner();
+    return;
+  }
+  showSiteScanMode("NFC");
+  startCountdown();
+  processNfcLinkSite();
 }
 
 
@@ -1986,7 +1999,7 @@ async function handlePersonScan(
   scanMode = "SITE";
   processing = false;
   
-  showSiteScanMode();
+  showSiteScanMode(nfcLinkSiteID ? "NFC" : "QR");
   startCountdown();
   processNfcLinkSite();
 
@@ -2599,11 +2612,12 @@ function showPersonScanMode() {
 //==================================================
 // 12. 切換到站點掃描模式
 //==================================================
-function showSiteScanMode() {
+function showSiteScanMode(preferredInputMode) {
 
   scanMode = "SITE";
   document.getElementById("stationModes").style.display = "flex";
-  selectStationMode("QR");
+  const inputMode = preferredInputMode || "QR";
+  selectStationMode(inputMode);
 
   titleBox.textContent =
     "掃描站點";
@@ -2620,9 +2634,9 @@ function showSiteScanMode() {
         : ""
     );
 
-  hintBox.innerHTML =
-    "人員登入已完成，相機不會關閉。<br>" +
-    "將站點 QR Code 對準掃描框。";
+  hintBox.innerHTML = inputMode === "NFC"
+    ? "NFC 網址已開啟，正在完成本站巡檢。"
+    : "人員登入已完成，相機不會關閉。<br>將站點 QR Code 對準掃描框。";
 
   resultBox.className =
     "result success";
@@ -2637,7 +2651,9 @@ function showSiteScanMode() {
           escapeHtml(currentPersonName)
         : ""
     ) +
-    "<br><br>📍 現在請掃描站點 QR Code";
+    (inputMode === "NFC"
+      ? "<br><br>📡 正在讀取 NFC 站點"
+      : "<br><br>📍 現在請掃描站點 QR Code");
 }
 
 
@@ -2944,6 +2960,12 @@ window.addEventListener(
         "show"
       );
 
+      return;
+    }
+
+    // NFC 標籤網址不應被安裝導引攔住。
+    if (nfcLinkSiteID) {
+      continueNfcLinkInspection();
       return;
     }
 
