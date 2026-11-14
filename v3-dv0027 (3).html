@@ -883,7 +883,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.4.1";
+  "V3.4.3";
 
 
 //==================================================
@@ -1385,6 +1385,20 @@ function processNfcLinkSite() {
   setTimeout(function() { handleSiteScan(nfcLinkSiteID); }, 300);
 }
 
+// iPhone 在 QR 相機持續使用中時，系統 NFC 網址通知可能不會出現。
+// 切到 NFC 分頁時必須真正停止相機，而非只把畫面隱藏。
+async function pauseQrCameraForNfc() {
+  if (!html5QrCode || !scanning) return;
+  try {
+    await html5QrCode.stop();
+  } catch (error) {
+    console.warn("停止 QR 相機失敗", error);
+  }
+  scanning = false;
+  document.getElementById("reader").innerHTML = "";
+  html5QrCode = null;
+}
+
 function selectStationMode(mode) {
   if (scanMode !== "SITE") return;
   stationInputMode = mode;
@@ -1393,8 +1407,12 @@ function selectStationMode(mode) {
   document.getElementById("nfcPanel").style.display = mode === "NFC" ? "block" : "none";
   document.getElementById("nfcModeButton").style.background = mode === "NFC" ? "#007f89" : "#102933";
   document.getElementById("qrModeButton").style.background = mode === "QR" ? "#007f89" : "#102933";
-  hintBox.textContent = mode === "NFC" ? "點擊啟動後，將手機靠近 NFC 標籤。" : "將站點 QR Code 對準掃描框。";
-  if (mode === "NFC") startNfc();
+  hintBox.textContent = mode === "NFC" ? "相機已關閉。現在可將手機靠近 NFC 標籤。" : "將站點 QR Code 對準掃描框。";
+  if (mode === "NFC") {
+    pauseQrCameraForNfc();
+    startNfc();
+  }
+  if (mode === "QR" && !scanning) startScanner();
 }
 
 async function startNfc() {
