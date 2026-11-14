@@ -883,7 +883,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.4.1";
+  "V3.4.2";
 
 
 //==================================================
@@ -1382,7 +1382,11 @@ function restoreSavedSession() {
 
 function processNfcLinkSite() {
   if (!nfcLinkSiteID || !currentPersonID || processing) return;
-  setTimeout(function() { handleSiteScan(nfcLinkSiteID); }, 300);
+  resultBox.className = "result waiting";
+  resultBox.innerHTML =
+    "📡 已讀到 NFC 標籤：" + escapeHtml(nfcLinkSiteID) +
+    "<br>正在連線更新巡檢資料...";
+  setTimeout(function() { handleSiteScan(nfcLinkSiteID); }, 100);
 }
 
 function selectStationMode(mode) {
