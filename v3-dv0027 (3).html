@@ -883,7 +883,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.4.4";
+  "V3.4.5";
 
 
 //==================================================
@@ -1389,8 +1389,42 @@ function restoreSavedSession() {
     currentPersonName = savedPersonName;
     currentPersonIsAdmin = currentPersonID === "PS0021" || currentPersonName === "管理員";
     sessionExpireTime = savedExpire;
+    restoreSiteScanHistory();
     return true;
   } catch (_) { return false; }
+}
+
+function getSiteHistoryStorageKey() {
+  if (!deviceID || !currentPersonID || !sessionExpireTime) return "";
+  return "inspectionSiteHistory_" + deviceID + "_" + currentPersonID + "_" + sessionExpireTime.getTime();
+}
+
+function saveSiteHistoryRecord(siteID, result, scanAt) {
+  const key = getSiteHistoryStorageKey();
+  if (!key) return;
+  try {
+    const records = JSON.parse(localStorage.getItem(key) || "[]");
+    records.push({ siteID: siteID, result: result || {}, scanAt: scanAt });
+    localStorage.setItem(key, JSON.stringify(records));
+  } catch (error) {
+    console.warn("無法保存本次掃描紀錄", error);
+  }
+}
+
+function restoreSiteScanHistory() {
+  const key = getSiteHistoryStorageKey();
+  if (!key || scannedSiteCount > 0) return;
+  try {
+    const records = JSON.parse(localStorage.getItem(key) || "[]");
+    if (!Array.isArray(records)) return;
+    records.forEach(function(record) {
+      if (record && record.siteID) {
+        appendSiteHistory(record.siteID, record.result || {}, record.scanAt, false);
+      }
+    });
+  } catch (error) {
+    console.warn("無法還原本次掃描紀錄", error);
+  }
 }
 
 function processNfcLinkSite() {
@@ -2219,6 +2253,11 @@ async function handleSiteScan(
 //==================================================
 function clearSiteScanHistory() {
 
+  const historyKey = getSiteHistoryStorageKey();
+  if (historyKey) {
+    try { localStorage.removeItem(historyKey); } catch (error) {}
+  }
+
   scannedSiteCount = 0;
 
   if (scanHistoryCount) {
@@ -2255,7 +2294,9 @@ function clearSiteScanHistory() {
 //==================================================
 function appendSiteHistory(
   siteID,
-  result
+  result,
+  scanAt,
+  skipSave
   ) {
 
   scannedSiteCount += 1;
@@ -2309,8 +2350,9 @@ function appendSiteHistory(
     ).trim();
 
 
-  const now =
-    new Date();
+  const now = scanAt
+    ? new Date(scanAt)
+    : new Date();
 
   const timeText =
     String(
@@ -2539,6 +2581,10 @@ function appendSiteHistory(
   scanHistoryList.prepend(
     item
   );
+
+  if (!skipSave) {
+    saveSiteHistoryRecord(siteID, result, now.getTime());
+  }
 
 }
 
