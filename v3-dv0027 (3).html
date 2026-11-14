@@ -799,7 +799,18 @@
       </div>
     </div>
 
-    <div class="scannerWrap">
+    <div id="stationModes" style="display:none; gap:8px; margin:12px 0">
+      <button id="nfcModeButton" type="button" onclick="selectStationMode('NFC')" style="flex:1; padding:14px; border:1px solid #00e6ec; border-radius:12px; background:#007f89; color:white; font-size:17px">◉ NFC 感應</button>
+      <button id="qrModeButton" type="button" onclick="selectStationMode('QR')" style="flex:1; padding:14px; border:1px solid #55727c; border-radius:12px; background:#102933; color:white; font-size:17px">▣ QR Code 掃描</button>
+    </div>
+    <div id="nfcPanel" style="display:none; padding:45px 20px; border:1px solid #286e83; border-radius:20px; text-align:center; background:#061e2b; color:white">
+      <div style="font-size:64px; color:#00e6ec">◉</div>
+      <div style="font-size:24px; font-weight:bold">NFC 感應模式</div>
+      <p>請將手機靠近巡檢站點的 NFC 標籤</p>
+      <button id="nfcStart" type="button" onclick="startNfc()" style="padding:12px 24px; border:1px solid #00e6ec; border-radius:24px; background:#063b46; color:#00e6ec; font-size:16px">點此啟動 NFC 感應</button>
+      <p id="nfcStatus" style="color:#9fbbc8"></p>
+    </div>
+    <div class="scannerWrap" id="scannerWrap">
       <div id="reader"></div>
       <div class="scanCorners" aria-hidden="true"></div>
       <button
@@ -872,7 +883,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.3.4";
+  "V3.4.0";
 
 
 //==================================================
@@ -1339,6 +1350,59 @@ let processing = false;
 // PERSON = 掃人員
 // SITE   = 掃站點
 let scanMode = "PERSON";
+let stationInputMode = "QR";
+let nfcAbort = null;
+let lastNfcValue = "";
+let lastNfcAt = 0;
+
+function selectStationMode(mode) {
+  if (scanMode !== "SITE") return;
+  stationInputMode = mode;
+  if (nfcAbort) { nfcAbort.abort(); nfcAbort = null; }
+  document.getElementById("scannerWrap").style.display = mode === "QR" ? "" : "none";
+  document.getElementById("nfcPanel").style.display = mode === "NFC" ? "block" : "none";
+  document.getElementById("nfcModeButton").style.background = mode === "NFC" ? "#007f89" : "#102933";
+  document.getElementById("qrModeButton").style.background = mode === "QR" ? "#007f89" : "#102933";
+  hintBox.textContent = mode === "NFC" ? "點擊啟動後，將手機靠近 NFC 標籤。" : "將站點 QR Code 對準掃描框。";
+  if (mode === "NFC") startNfc();
+}
+
+async function startNfc() {
+  const status = document.getElementById("nfcStatus");
+  if (scanMode !== "SITE" || stationInputMode !== "NFC") return;
+  if (!('NDEFReader' in window)) {
+    status.textContent = "此瀏覽器不支援網頁直接讀取 NFC。請使用支援 Web NFC 的 Android Chrome，或切換 QR Code。iPhone 網頁無法直接持續讀取 NFC。";
+    return;
+  }
+  if (nfcAbort) nfcAbort.abort();
+  const controller = new AbortController();
+  nfcAbort = controller;
+  try {
+    const reader = new NDEFReader();
+    await reader.scan({signal: controller.signal});
+    status.textContent = "等待感應中…";
+    reader.onreadingerror = () => { status.textContent = "讀取失敗，請重新靠近標籤。"; };
+    reader.onreading = async event => {
+      if (scanMode !== 'SITE' || stationInputMode !== 'NFC' || processing) return;
+      let value = '';
+      for (const record of event.message.records) {
+        if (record.recordType === 'text' || record.recordType === 'url') {
+          try { value = new TextDecoder(record.encoding || 'utf-8').decode(record.data).trim(); } catch (_) { continue; }
+          if (extractCodeFromQr(value, 'code', /^ST\d+$/)) break;
+          value = '';
+        }
+      }
+      if (!value) { status.textContent = '標籤沒有有效站點編碼，請寫入 ST0001 或含 code=ST0001 的網址。'; return; }
+      if (value === lastNfcValue && Date.now() - lastNfcAt < 5000) return;
+      lastNfcValue = value; lastNfcAt = Date.now();
+      status.textContent = '已感應，正在處理…';
+      await handleSiteScan(value);
+      if (stationInputMode === 'NFC') status.textContent = '等待感應下一個站點…';
+    };
+  } catch (error) {
+    if (error.name !== 'AbortError') status.textContent = '無法啟動 NFC：' + error.message + '。請確認 NFC 已開啟並允許權限，再點擊按鈕重試。';
+  }
+}
 
 let currentPersonID = "";
 let currentPersonName = "";
@@ -1693,6 +1757,8 @@ async function onScanSuccess(
   decodedText
 ) {
 
+  if (scanMode === "SITE" && stationInputMode !== "QR") return;
+
   const rawValue =
     String(
       decodedText || ""
@@ -2031,7 +2097,8 @@ async function handleSiteScan(
             escapeHtml(result.siteName)
           : ""
       ) +
-      "<br><br>📷 相機保持開啟，可繼續掃描下一個站點";
+      "<br>方式：" + stationInputMode +
+      "<br><br>可繼續掃描下一個站點";
      // 從後端完成時間開始計算同站點防重複時間
       lastDecodedAt = Date.now();
 
@@ -2049,7 +2116,7 @@ async function handleSiteScan(
             "result";
 
           resultBox.textContent =
-            "📍 請掃描下一個站點 QR Code";
+            stationInputMode === "NFC" ? "📍 請感應下一個 NFC 站點" : "📍 請掃描下一個站點 QR Code";
         }
       },
       700
@@ -2452,6 +2519,11 @@ function extractCodeFromQr(
 function showPersonScanMode() {
 
   scanMode = "PERSON";
+  if (nfcAbort) { nfcAbort.abort(); nfcAbort = null; }
+  stationInputMode = "QR";
+  document.getElementById("stationModes").style.display = "none";
+  document.getElementById("nfcPanel").style.display = "none";
+  document.getElementById("scannerWrap").style.display = "";
 
   titleBox.textContent =
     "掃描人員";
@@ -2474,6 +2546,8 @@ function showPersonScanMode() {
 function showSiteScanMode() {
 
   scanMode = "SITE";
+  document.getElementById("stationModes").style.display = "flex";
+  selectStationMode("QR");
 
   titleBox.textContent =
     "掃描站點";
