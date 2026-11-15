@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="zh-TW">
 <head>
   <base target="_top">
@@ -13,30 +14,33 @@
   <!--==================================================
     PWA / 主畫面安裝設定
   ==================================================-->
+
   <link rel="manifest" href="./manifest.json">
 
   <meta name="theme-color" content="#1565c0">
 
-  <meta
-    name="apple-mobile-web-app-capable"
-    content="yes"
-  >
+<meta
+name="apple-mobile-web-app-capable"
+content="yes"
 
-  <meta
-    name="apple-mobile-web-app-status-bar-style"
-    content="default"
-  >
 
-  <meta
-    name="apple-mobile-web-app-title"
-    content="智慧巡檢系統"
-  >
+
+<meta
+name="apple-mobile-web-app-status-bar-style"
+content="default"
+
+
+
+<meta
+name="apple-mobile-web-app-title"
+content="智慧巡檢系統"
+
+
 
   <link
     rel="apple-touch-icon"
     href="./icons/icon-192.png"
   >
-
 
   <script
     src="https://unpkg.com/html5-qrcode"
@@ -537,8 +541,19 @@
     }
 
     .scanCorners {
+      /*
+       * 白色角標必須與 html5-qrcode 的實際辨識區完全相同。
+       * 以相機畫面的短邊為基準，維持中央正方形；
+       * 外層相機畫面則仍維持單頁所需的橫向比例。
+       */
       position: absolute;
-      inset: 8% 7%;
+      left: 50%;
+      top: 50%;
+      width: auto;
+      height: 72%;
+      max-width: 72%;
+      aspect-ratio: 1 / 1;
+      transform: translate(-50%, -50%);
       z-index: 4;
       pointer-events: none;
       background:
@@ -713,6 +728,7 @@
       .scannerWrap, .result, .scanHistory { margin-left: 6px; margin-right: 6px; }
     }
   </style>
+
 </head>
 
 <body>
@@ -720,161 +736,163 @@
   <!--==================================================
     智慧巡檢系統主畫面安裝提示
   ==================================================-->
+
   <div
     id="installPanel"
     class="installPanel"
   >
     <div class="installCard">
 
-      <div class="installIcon">
-        📱
-      </div>
+  <div class="installIcon">
+    📱
+  </div>
 
-      <div class="installTitle">
-        智慧巡檢系統
-      </div>
+  <div class="installTitle">
+    智慧巡檢系統
+  </div>
 
-      <div
-        id="installMessage"
-        class="installMessage"
-      >
-        正在檢查手機環境...
-      </div>
+  <div
+    id="installMessage"
+    class="installMessage"
+  >
+    正在檢查手機環境...
+  </div>
 
-      <button
-        id="installButton"
-        class="installButton"
-        type="button"
-        onclick="installSmartInspectionApp()"
-      >
-        📱 安裝智慧巡檢系統
-      </button>
+  <button
+    id="installButton"
+    class="installButton"
+    type="button"
+    onclick="installSmartInspectionApp()"
+  >
+    📱 安裝智慧巡檢系統
+  </button>
 
-      <button
-        id="continueButton"
-        class="continueButton"
-        type="button"
-        onclick="continueToInspection()"
-      >
-        先使用網頁版
-      </button>
+  <button
+    id="continueButton"
+    class="continueButton"
+    type="button"
+    onclick="continueToInspection()"
+  >
+    先使用網頁版
+  </button>
 
-    </div>
+</div>
+
   </div>
 
   <div class="card">
 
-    <div class="topBar">
+<div class="topBar">
 
-    <div
-      class="title"
-      id="title"
-    >
-      📷 掃描人員 QR Code
-    </div>
+<div
+  class="title"
+  id="title"
+>
+  📷 掃描人員 QR Code
+</div>
 
-    <div class="devicePanel">
-      <div
-        id="device"
-        class="device"
-      >
-        目前裝置：讀取中...
-      </div>
+<div class="devicePanel">
+  <div
+    id="device"
+    class="device"
+  >
+    目前裝置：讀取中...
+  </div>
 
-      <div
-        id="systemVersion"
-        class="systemVersion"
-      ></div>
-    </div>
+  <div
+    id="systemVersion"
+    class="systemVersion"
+  ></div>
+</div>
 
-    </div>
+</div>
 
-    <div
-      id="loginInfo"
-      class="loginInfo"
-    >
-      <div id="loginPerson"></div>
-      <div class="loginTimerRow">
-        剩餘
-        <span
-          id="countdown"
-          class="timer"
-        >--:--</span>
-      </div>
-    </div>
+<div
+  id="loginInfo"
+  class="loginInfo"
+>
+  <div id="loginPerson"></div>
+  <div class="loginTimerRow">
+    剩餘
+    <span
+      id="countdown"
+      class="timer"
+    >--:--</span>
+  </div>
+</div>
 
-    <div id="stationModes" style="display:none; gap:8px; margin:12px 0">
-      <button id="nfcModeButton" type="button" onclick="selectStationMode('NFC')" style="flex:1; padding:14px; border:1px solid #00e6ec; border-radius:12px; background:#007f89; color:white; font-size:17px">◉ NFC 感應</button>
-      <button id="qrModeButton" type="button" onclick="selectStationMode('QR')" style="flex:1; padding:14px; border:1px solid #55727c; border-radius:12px; background:#102933; color:white; font-size:17px">▣ QR Code 掃描</button>
-    </div>
-    <div id="nfcPanel" style="display:none; padding:26px 20px; border:1px solid #286e83; border-radius:20px; text-align:center; background:#061e2b; color:white">
-      <div style="font-size:64px; color:#00e6ec">◉</div>
-      <div style="font-size:24px; font-weight:bold">NFC 感應模式</div>
-      <p>請將手機靠近巡檢站點的 NFC 標籤</p>
-      <button id="nfcStart" type="button" onclick="startNfc()" style="padding:12px 24px; border:1px solid #00e6ec; border-radius:24px; background:#063b46; color:#00e6ec; font-size:16px">點此啟動 NFC 感應</button>
-      <p id="nfcStatus" style="display:none; color:#9fbbc8"></p>
-    </div>
-    <div class="scannerWrap" id="scannerWrap">
-      <div id="reader"></div>
-      <div class="scanCorners" aria-hidden="true"></div>
-      <button
-        id="torchButton"
-        class="torchButton"
-        type="button"
-        aria-label="開啟或關閉手電筒"
-        onclick="toggleTorch()"
-      >⌁</button>
-    </div>
+<div id="stationModes" style="display:none; gap:8px; margin:12px 0">
+  <button id="nfcModeButton" type="button" onclick="selectStationMode('NFC')" style="flex:1; padding:14px; border:1px solid #00e6ec; border-radius:12px; background:#007f89; color:white; font-size:17px">◉ NFC 感應</button>
+  <button id="qrModeButton" type="button" onclick="selectStationMode('QR')" style="flex:1; padding:14px; border:1px solid #55727c; border-radius:12px; background:#102933; color:white; font-size:17px">▣ QR Code 掃描</button>
+</div>
+<div id="nfcPanel" style="display:none; padding:26px 20px; border:1px solid #286e83; border-radius:20px; text-align:center; background:#061e2b; color:white">
+  <div style="font-size:64px; color:#00e6ec">◉</div>
+  <div style="font-size:24px; font-weight:bold">NFC 感應模式</div>
+  <p>請將手機靠近巡檢站點的 NFC 標籤</p>
+  <button id="nfcStart" type="button" onclick="startNfc()" style="padding:12px 24px; border:1px solid #00e6ec; border-radius:24px; background:#063b46; color:#00e6ec; font-size:16px">點此啟動 NFC 感應</button>
+  <p id="nfcStatus" style="display:none; color:#9fbbc8"></p>
+</div>
+<div class="scannerWrap" id="scannerWrap">
+  <div id="reader"></div>
+  <div class="scanCorners" aria-hidden="true"></div>
+  <button
+    id="torchButton"
+    class="torchButton"
+    type="button"
+    aria-label="開啟或關閉手電筒"
+    onclick="toggleTorch()"
+  >⌁</button>
+</div>
 
-    <div
-      id="result"
-      class="result"
-    >
-      ⏳ 正在開啟後鏡頭...
-    </div>
+<div
+  id="result"
+  class="result"
+>
+  ⏳ 正在開啟後鏡頭...
+</div>
 
 
-    <!-- 登入有效時間內，成功掃描的站點會一直往下累加 -->
-    <div
-      id="scanHistory"
-      class="scanHistory"
-    >
-      <div
-        class="scanHistoryTitle"
-        role="button"
-        tabindex="0"
-        onclick="toggleScanHistory()"
-        onkeydown="handleHistoryKey(event)"
-      >
-        ▤ 本次掃描
-        <span
-          id="scanHistoryCount"
-          class="scanHistoryCount"
-        >0</span>
-      </div>
+<!-- 登入有效時間內，成功掃描的站點會一直往下累加 -->
+<div
+  id="scanHistory"
+  class="scanHistory"
+>
+  <div
+    class="scanHistoryTitle"
+    role="button"
+    tabindex="0"
+    onclick="toggleScanHistory()"
+    onkeydown="handleHistoryKey(event)"
+  >
+    ▤ 本次掃描
+    <span
+      id="scanHistoryCount"
+      class="scanHistoryCount"
+    >0</span>
+  </div>
 
-      <div
-        id="scanHistoryList"
-        class="scanHistoryList"
-      ></div>
-    </div>
+  <div
+    id="scanHistoryList"
+    class="scanHistoryList"
+  ></div>
+</div>
 
-    <button
-      id="retryButton"
-      class="retryButton"
-      type="button"
-      onclick="restartScanner()"
-    >
-      重新開啟掃描器
-    </button>
+<button
+  id="retryButton"
+  class="retryButton"
+  type="button"
+  onclick="restartScanner()"
+>
+  重新開啟掃描器
+</button>
 
-    <div
-      id="hint"
-      class="hint"
-    >
-      將人員 QR Code 對準掃描框。<br>
-      掃描登入成功後，相機不會關閉，會直接切換為站點掃描。
-    </div>
+<div
+  id="hint"
+  class="hint"
+>
+  將人員 QR Code 對準掃描框。<br>
+  掃描登入成功後，相機不會關閉，會直接切換為站點掃描。
+</div>
 
   </div>
 
@@ -887,7 +905,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.5.7";
+  "V3.5.8";
 
 
 //==================================================
@@ -1834,12 +1852,18 @@ async function startScanner() {
           viewfinderWidth,
           viewfinderHeight
         ) {
-      
-          // 與畫面上的白色掃描角標對齊：寬度接近外框，
-          // 高度依相機框比例縮短，不再因外框變矮而縮成小方框。
+          // 中央正方形為真正的辨識範圍。
+          // 對應畫面白色角標，集中辨識可提高 QR 掃描穩定度。
+          const minEdge = Math.min(
+            viewfinderWidth,
+            viewfinderHeight
+          );
+
+          const size = Math.floor(minEdge * 0.72);
+
           return {
-            width: Math.floor(viewfinderWidth * 0.86),
-            height: Math.floor(viewfinderHeight * 0.84)
+            width: size,
+            height: size
           };
         },
       
@@ -3019,5 +3043,6 @@ window.addEventListener(
 );
 
 </script>
+
 </body>
 </html>
