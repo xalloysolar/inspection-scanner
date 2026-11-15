@@ -883,7 +883,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.5.0";
+  "V3.5.1";
 
 
 //==================================================
@@ -2250,18 +2250,7 @@ async function handleSiteScan(
     resultBox.className =
       "result success";
 
-    resultBox.innerHTML =
-      "✅ 站點掃描完成" +
-      "<br>站點：" +
-      escapeHtml(siteID) +
-      (
-        result.siteName
-          ? "<br>名稱：" +
-            escapeHtml(result.siteName)
-          : ""
-      ) +
-      "<br>方式：" + actualScanMethod +
-      "<br><br>可繼續掃描下一個站點";
+    resultBox.textContent = "請掃描站點";
      // 從後端完成時間開始計算同站點防重複時間
       lastDecodedAt = Date.now();
 
@@ -2275,11 +2264,8 @@ async function handleSiteScan(
 
         if (scanMode === "SITE") {
 
-          resultBox.className =
-            "result";
-
-          resultBox.textContent =
-            stationInputMode === "NFC" ? "📍 請感應下一個 NFC 站點" : "📍 請掃描下一個站點 QR Code";
+          resultBox.className = "result success";
+          resultBox.textContent = "請掃描站點";
         }
       },
       700
@@ -2754,19 +2740,7 @@ function showSiteScanMode(preferredInputMode) {
   resultBox.className =
     "result success";
 
-  resultBox.innerHTML =
-    "✅ 人員登入成功" +
-    "<br>人員：" +
-    escapeHtml(currentPersonID) +
-    (
-      currentPersonName
-        ? "<br>姓名：" +
-          escapeHtml(currentPersonName)
-        : ""
-    ) +
-    (inputMode === "NFC"
-      ? "<br><br>📡 正在讀取 NFC 站點"
-      : "<br><br>📍 現在請掃描站點 QR Code");
+  resultBox.textContent = "請掃描站點";
 }
 
 
