@@ -358,7 +358,7 @@
       background:
         radial-gradient(circle at 50% 0, rgba(24, 229, 239, 0.10), transparent 34%),
         linear-gradient(145deg, #101a1f 0%, #050a0d 56%, #0c1519 100%);
-      overflow-x: hidden;
+      overflow: hidden;
     }
 
     .card {
@@ -366,7 +366,8 @@
       flex-direction: column;
       width: 100%;
       max-width: 520px;
-      min-height: calc(100dvh - max(22px, env(safe-area-inset-top)) - max(24px, env(safe-area-inset-bottom)));
+      height: calc(100dvh - max(22px, env(safe-area-inset-top)) - max(24px, env(safe-area-inset-bottom)));
+      min-height: 0;
       margin: 0 auto;
       padding: 0;
       border: 1px solid #26363e;
@@ -381,7 +382,7 @@
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
-      min-height: 82px;
+      min-height: 72px;
       position: relative;
       border-bottom: 1px solid var(--line);
       background: linear-gradient(135deg, #1a272d, #0c1317 70%);
@@ -457,7 +458,7 @@
       display: none;
       grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
-      margin: 8px 10px;
+      margin: 6px 10px;
       padding: 0;
       overflow: hidden;
       border: 1px solid rgba(67, 244, 126, 0.52);
@@ -474,7 +475,7 @@
 
     #loginPerson {
       min-width: 0;
-      padding: 13px 12px;
+      padding: 10px 12px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -495,7 +496,7 @@
     }
 
     .loginTimerRow {
-      padding: 13px 12px;
+      padding: 10px 12px;
       border-left: 1px solid var(--line);
       color: #dce6e9;
       font-size: clamp(13px, 3.7vw, 17px);
@@ -510,11 +511,11 @@
 
     .scannerWrap {
       position: relative;
-      flex: 1 1 auto;
+      flex: 0 0 auto;
       width: auto;
       max-width: none;
-      min-height: 330px;
-      height: clamp(350px, 57dvh, 680px);
+      min-height: 240px;
+      height: clamp(240px, 35dvh, 420px);
       margin: 0 10px;
       overflow: hidden;
       border: 1px solid #33464f;
@@ -527,7 +528,7 @@
     #reader video {
       width: 100% !important;
       height: 100% !important;
-      min-height: 330px;
+      min-height: 240px;
       border-radius: 8px;
     }
 
@@ -576,9 +577,9 @@
     }
 
     .result {
-      min-height: 58px;
-      margin: 10px;
-      padding: 14px 16px;
+      min-height: 46px;
+      margin: 7px 10px;
+      padding: 9px 14px;
       border: 1px solid #34474f;
       border-radius: 12px;
       background: linear-gradient(135deg, #17242a, #0a1115);
@@ -601,7 +602,7 @@
 
     .scanHistory {
       display: none;
-      margin: 0 10px 10px;
+      margin: 0 10px 6px;
       overflow: hidden;
       border: 1px solid #33444c;
       border-radius: 12px;
@@ -614,7 +615,7 @@
     .scanHistoryTitle {
       position: relative;
       margin: 0;
-      padding: 15px 48px 15px 16px;
+      padding: 10px 48px 10px 16px;
       color: var(--text);
       font-size: clamp(16px, 4.5vw, 20px);
       text-align: left;
@@ -641,8 +642,8 @@
 
     .scanHistoryList {
       display: flex;
-      max-height: 74px;
-      padding: 0 10px 10px;
+      max-height: 64px;
+      padding: 0 10px 7px;
       gap: 8px;
       overflow: hidden;
       transition: max-height .25s ease;
@@ -655,7 +656,7 @@
 
     .scanHistoryItem {
       flex: 0 0 auto;
-      padding: 11px 12px;
+      padding: 8px 10px;
       border: 1px solid #2d424a;
       border-radius: 10px;
       background: #111c21;
@@ -669,7 +670,7 @@
     .scanHistorySub { color: var(--muted); font-size: 12px; }
 
     .hint {
-      margin: 0 12px 12px;
+      display: none;
       color: #819198;
       font-size: 12px;
       line-height: 1.45;
@@ -692,12 +693,15 @@
       .systemVersion { margin-top: 2px; }
       .loginInfo { margin-top: 6px; margin-bottom: 6px; }
       #loginPerson, .loginTimerRow { padding-top: 9px; padding-bottom: 9px; }
-      .scannerWrap { height: 52dvh; min-height: 285px; }
-      #reader, #reader video { min-height: 285px; }
-      .result { min-height: 48px; margin-top: 7px; margin-bottom: 7px; padding: 10px; }
-      .scanHistoryTitle { padding-top: 11px; padding-bottom: 11px; }
+      .scannerWrap { height: 34dvh; min-height: 220px; }
+      #reader, #reader video { min-height: 220px; }
+      .result { min-height: 42px; margin-top: 6px; margin-bottom: 6px; padding: 8px 10px; }
+      .scanHistoryTitle { padding-top: 8px; padding-bottom: 8px; }
       .hint { display: none; }
     }
+
+    /* 單頁巡檢：避免模式按鈕與掃描區之間佔用多餘高度。 */
+    #stationModes { margin: 8px 10px !important; }
 
     @media (max-width: 360px) {
       body { padding-left: 5px; padding-right: 5px; }
@@ -883,7 +887,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.5.5";
+  "V3.5.7";
 
 
 //==================================================
@@ -1831,20 +1835,11 @@ async function startScanner() {
           viewfinderHeight
         ) {
       
-          const minEdge =
-            Math.min(
-              viewfinderWidth,
-              viewfinderHeight
-            );
-      
-          const size =
-            Math.floor(
-              minEdge * 0.72
-            );
-      
+          // 與畫面上的白色掃描角標對齊：寬度接近外框，
+          // 高度依相機框比例縮短，不再因外框變矮而縮成小方框。
           return {
-            width: size,
-            height: size
+            width: Math.floor(viewfinderWidth * 0.86),
+            height: Math.floor(viewfinderHeight * 0.84)
           };
         },
       
