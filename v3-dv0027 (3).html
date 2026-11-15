@@ -883,7 +883,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.4.8";
+  "V3.5.0";
 
 
 //==================================================
@@ -1403,12 +1403,12 @@ function getSiteHistoryStorageKey() {
   return "inspectionSiteHistory_" + deviceID + "_" + currentPersonID + "_" + sessionExpireTime.getTime();
 }
 
-function saveSiteHistoryRecord(siteID, result, scanAt) {
+function saveSiteHistoryRecord(siteID, result, scanAt, scanMethod) {
   const key = getSiteHistoryStorageKey();
   if (!key) return;
   try {
     const records = JSON.parse(localStorage.getItem(key) || "[]");
-    records.push({ siteID: siteID, result: result || {}, scanAt: scanAt });
+    records.push({ siteID: siteID, result: result || {}, scanAt: scanAt, scanMethod: scanMethod || "QR" });
     localStorage.setItem(key, JSON.stringify(records));
   } catch (error) {
     console.warn("無法保存本次掃描紀錄", error);
@@ -1439,11 +1439,26 @@ function restoreSiteScanHistory() {
     uniqueRecords.forEach(function(record) {
       if (record && record.siteID) {
         // 最後一個 true 表示僅還原畫面，不可再次保存。
-        appendSiteHistory(record.siteID, record.result || {}, record.scanAt, true);
+        appendSiteHistory(record.siteID, record.result || {}, record.scanAt, true, record.scanMethod || "QR");
       }
     });
   } catch (error) {
     console.warn("無法還原本次掃描紀錄", error);
+  }
+}
+
+function getNfcLinkConsumedStorageKey(siteID) {
+  if (!deviceID || !currentPersonID || !sessionExpireTime || !siteID) return "";
+  return "inspectionNfcLinkConsumed_" + deviceID + "_" + currentPersonID + "_" + sessionExpireTime.getTime() + "_" + siteID;
+}
+
+function clearNfcLinkFromAddress() {
+  try {
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete("site");
+    cleanUrl.searchParams.delete("code");
+    window.history.replaceState({}, "", cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+  } catch (error) {
   }
 }
 
@@ -1452,16 +1467,21 @@ function processNfcLinkSite() {
 
   const siteID = pendingNfcSiteID;
   pendingNfcSiteID = "";
+  const consumedKey = getNfcLinkConsumedStorageKey(siteID);
 
-  try {
-    const cleanUrl = new URL(window.location.href);
-    cleanUrl.searchParams.delete("site");
-    cleanUrl.searchParams.delete("code");
-    window.history.replaceState({}, "", cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
-  } catch (error) {
+  // iPhone Safari 可能在重新開啟頁面時還原原本的 NFC 網址。
+  // 同一個站點在同一次登入已處理過，就不可再次寫入。
+  if (consumedKey && localStorage.getItem(consumedKey) === "1") {
+    clearNfcLinkFromAddress();
+    resultBox.className = "result";
+    resultBox.textContent = "📍 此 NFC 站點本次登入已掃描，請感應下一個站點。";
+    return;
   }
 
-  setTimeout(function() { handleSiteScan(siteID); }, 300);
+  if (consumedKey) localStorage.setItem(consumedKey, "1");
+  clearNfcLinkFromAddress();
+
+  setTimeout(function() { handleSiteScan(siteID, "NFC"); }, 300);
 }
 
 // iPhone 在 QR 相機持續使用中時，系統 NFC 網址通知可能不會出現。
@@ -1526,7 +1546,7 @@ async function startNfc() {
       if (value === lastNfcValue && Date.now() - lastNfcAt < 5000) return;
       lastNfcValue = value; lastNfcAt = Date.now();
       status.textContent = '已感應，正在處理…';
-      await handleSiteScan(value);
+      await handleSiteScan(value, "NFC");
       if (stationInputMode === 'NFC') status.textContent = '等待感應下一個站點…';
     };
   } catch (error) {
@@ -1943,7 +1963,7 @@ async function onScanSuccess(
     // 先鎖住此 QR Code；成功、失敗或逾時都不會連續重送。
     lastHandledSiteRawValue = rawValue;
 
-    await handleSiteScan(rawValue);
+    await handleSiteScan(rawValue, "QR");
   }
 }
 
@@ -2103,8 +2123,11 @@ async function handlePersonScan(
 // 不覆蓋前一筆，可持續掃描下一站。
 //==================================================
 async function handleSiteScan(
-  rawValue
+  rawValue,
+  scanMethod
 ) {
+
+  const actualScanMethod = scanMethod === "NFC" ? "NFC" : "QR Code";
 
   //================================================
   // 1. 必須有有效登入人員
@@ -2214,7 +2237,10 @@ async function handleSiteScan(
     //================================================
     appendSiteHistory(
       siteID,
-      result
+      result,
+      undefined,
+      false,
+      actualScanMethod
     );
 
 
@@ -2234,7 +2260,7 @@ async function handleSiteScan(
             escapeHtml(result.siteName)
           : ""
       ) +
-      "<br>方式：" + stationInputMode +
+      "<br>方式：" + actualScanMethod +
       "<br><br>可繼續掃描下一個站點";
      // 從後端完成時間開始計算同站點防重複時間
       lastDecodedAt = Date.now();
@@ -2330,7 +2356,8 @@ function appendSiteHistory(
   siteID,
   result,
   scanAt,
-  skipSave
+  skipSave,
+  scanMethod
   ) {
 
   scannedSiteCount += 1;
@@ -2382,6 +2409,8 @@ function appendSiteHistory(
         ? result.siteName
         : ""
     ).trim();
+
+  const historyScanMethod = scanMethod === "NFC" ? "NFC" : "QR Code";
 
 
   const now = scanAt
@@ -2589,6 +2618,10 @@ function appendSiteHistory(
     escapeHtml(
       currentPersonID
     ) +
+    "　｜　方式：" +
+    escapeHtml(
+      historyScanMethod
+    ) +
     (
       timingDetailText
         ? "<br>⏱ " +
@@ -2617,7 +2650,7 @@ function appendSiteHistory(
   );
 
   if (!skipSave) {
-    saveSiteHistoryRecord(siteID, result, now.getTime());
+    saveSiteHistoryRecord(siteID, result, now.getTime(), historyScanMethod);
   }
 
 }
