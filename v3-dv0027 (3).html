@@ -914,7 +914,7 @@ content="智慧巡檢系統"
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.6.1";
+  "V3.6.2";
 
 
 //==================================================
@@ -2261,7 +2261,8 @@ async function handleSiteScan(
     resultBox.className =
       "result success";
 
-    resultBox.textContent = "請掃描站點";
+    resultBox.innerHTML =
+      "請將站點 QR Code<br>對準中央掃描框";
      // 從後端完成時間開始計算同站點防重複時間
       lastDecodedAt = Date.now();
 
@@ -2276,7 +2277,8 @@ async function handleSiteScan(
         if (scanMode === "SITE") {
 
           resultBox.className = "result success";
-          resultBox.textContent = "請掃描站點";
+          resultBox.innerHTML =
+            "請將站點 QR Code<br>對準中央掃描框";
         }
       },
       700
@@ -2728,7 +2730,8 @@ function showSiteScanMode(preferredInputMode) {
   resultBox.className =
     "result success";
 
-  resultBox.textContent = "請掃描站點";
+  resultBox.innerHTML =
+    "請將站點 QR Code<br>對準中央掃描框";
 }
 
 
