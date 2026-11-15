@@ -883,7 +883,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.5.4";
+  "V3.5.5";
 
 
 //==================================================
@@ -1447,11 +1447,6 @@ function restoreSiteScanHistory() {
   }
 }
 
-function getNfcLinkConsumedStorageKey(siteID) {
-  if (!deviceID || !currentPersonID || !sessionExpireTime || !siteID) return "";
-  return "inspectionNfcLinkConsumed_" + deviceID + "_" + currentPersonID + "_" + sessionExpireTime.getTime() + "_" + siteID;
-}
-
 function clearNfcLinkFromAddress() {
   try {
     const cleanUrl = new URL(window.location.href);
@@ -1462,36 +1457,11 @@ function clearNfcLinkFromAddress() {
   }
 }
 
-// 同一站點若需再次以 NFC 巡檢，必須由使用者先明確解除一次防重複。
-// 這能避免 iPhone Safari 還原舊網址時被誤判為新的 NFC 感應。
-function armNfcSiteRescan(siteID) {
-  const safeSiteID = String(siteID || "").trim().toUpperCase();
-  const consumedKey = getNfcLinkConsumedStorageKey(safeSiteID);
-  if (consumedKey) localStorage.removeItem(consumedKey);
-  resultBox.className = "result";
-  resultBox.textContent = "請再次感應 NFC 標籤以重新掃描此站點。";
-}
-
 function processNfcLinkSite() {
   if (!pendingNfcSiteID || !currentPersonID || processing) return;
 
   const siteID = pendingNfcSiteID;
   pendingNfcSiteID = "";
-  const consumedKey = getNfcLinkConsumedStorageKey(siteID);
-
-  // iPhone Safari 可能在重新開啟頁面時還原原本的 NFC 網址。
-  // 同一個站點在同一次登入已處理過，先要求使用者明確解除防重複。
-  if (consumedKey && localStorage.getItem(consumedKey) === "1") {
-    clearNfcLinkFromAddress();
-    resultBox.className = "result";
-    resultBox.innerHTML =
-      "📍 此 NFC 站點本次登入已掃描。<br>" +
-      "<button type=\"button\" onclick=\"armNfcSiteRescan('" + siteID + "')\" " +
-      "style=\"margin-top:10px;padding:9px 18px;border:1px solid #00e6ec;border-radius:20px;background:#063b46;color:#00e6ec;font-size:15px\">重新掃描此站點</button>";
-    return;
-  }
-
-  if (consumedKey) localStorage.setItem(consumedKey, "1");
   clearNfcLinkFromAddress();
 
   setTimeout(function() { handleSiteScan(siteID, "NFC"); }, 300);
