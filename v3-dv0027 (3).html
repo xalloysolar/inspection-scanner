@@ -934,7 +934,7 @@ content="智慧巡檢系統"
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.6.7";
+  "V3.6.8";
 
 
 //==================================================
@@ -963,9 +963,28 @@ const nfcLinkSiteID =
       ? String(params.get("site") || params.get("code")).trim().toUpperCase()
       : "";
 
-// NFC 網址帶入的站點只允許在本次頁面載入時使用一次。
-// 切換 QR／NFC 或重新開相機時，不得再次送出同一站點。
-let pendingNfcSiteID = nfcLinkSiteID;
+// 重新整理／從背景重開時，Safari 可能保留上一個 NFC 網址。
+// 這種情況只還原登入，不得把舊網址再次當作新的 NFC 感應。
+const navigationEntry = performance.getEntriesByType("navigation")[0];
+const isRestoredNavigation = Boolean(
+  navigationEntry &&
+  (navigationEntry.type === "reload" || navigationEntry.type === "back_forward")
+);
+const shouldAutoProcessNfc = Boolean(nfcLinkSiteID) && !isRestoredNavigation;
+
+// NFC 網址帶入的站點只允許在真正由 NFC 開啟的當次頁面使用一次。
+let pendingNfcSiteID = shouldAutoProcessNfc ? nfcLinkSiteID : "";
+
+// 先清除網址中的舊站點碼，避免下次重開又帶回同一張 NFC。
+if (nfcLinkSiteID) {
+  try {
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete("site");
+    cleanUrl.searchParams.delete("code");
+    window.history.replaceState({}, "", cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+  } catch (error) {
+  }
+}
 
 // GitHub Pages 版本不使用 Apps Script 範本注入；
 // 裝置編碼由網址的 ?device=DV0027 讀取。
@@ -2134,7 +2153,7 @@ async function handlePersonScan(
   scanMode = "SITE";
   processing = false;
   
-  showSiteScanMode(nfcLinkSiteID ? "NFC" : "QR");
+  showSiteScanMode(pendingNfcSiteID ? "NFC" : "QR");
   startCountdown();
   processNfcLinkSite();
 
@@ -3066,7 +3085,7 @@ window.addEventListener(
     }
 
     // NFC 標籤網址不應被安裝導引攔住。
-    if (nfcLinkSiteID) {
+    if (shouldAutoProcessNfc) {
       continueNfcLinkInspection();
       return;
     }
