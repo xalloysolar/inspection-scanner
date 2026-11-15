@@ -542,18 +542,12 @@ content="智慧巡檢系統"
 
     .scanCorners {
       /*
-       * 白色角標必須與 html5-qrcode 的實際辨識區完全相同。
-       * 以相機畫面的短邊為基準，維持中央正方形；
-       * 外層相機畫面則仍維持單頁所需的橫向比例。
+       * 恢復 V3.3.4 的掃描視覺：
+       * 外框提供大範圍對準指引；中央正方形則由 qrbox 作為真正辨識區。
+       * 相機區高度仍由單頁版面控制，不增加頁面高度。
        */
       position: absolute;
-      left: 50%;
-      top: 50%;
-      width: auto;
-      height: 72%;
-      max-width: 72%;
-      aspect-ratio: 1 / 1;
-      transform: translate(-50%, -50%);
+      inset: 8% 7%;
       z-index: 4;
       pointer-events: none;
       background:
@@ -905,7 +899,7 @@ content="智慧巡檢系統"
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.5.8";
+  "V3.5.9";
 
 
 //==================================================
