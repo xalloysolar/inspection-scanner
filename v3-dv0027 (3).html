@@ -883,7 +883,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.4.6";
+  "V3.4.7";
 
 
 //==================================================
@@ -1416,14 +1416,30 @@ function saveSiteHistoryRecord(siteID, result, scanAt) {
 }
 
 function restoreSiteScanHistory() {
-  const key = getSiteHistoryStorageKey();
-  if (!key || scannedSiteCount > 0) return;
+  const storageKey = getSiteHistoryStorageKey();
+  if (!storageKey || scannedSiteCount > 0) return;
   try {
-    const records = JSON.parse(localStorage.getItem(key) || "[]");
+    const records = JSON.parse(localStorage.getItem(storageKey) || "[]");
     if (!Array.isArray(records)) return;
-    records.forEach(function(record) {
+
+    // 修正 V3.4.5～V3.4.6 還原畫面時重複保存的歷史資料。
+    const seen = new Set();
+    const uniqueRecords = records.filter(function(record) {
+      if (!record || !record.siteID) return false;
+      const uniqueKey = String(record.siteID) + "|" + String(record.scanAt || "");
+      if (seen.has(uniqueKey)) return false;
+      seen.add(uniqueKey);
+      return true;
+    });
+
+    if (uniqueRecords.length !== records.length) {
+      localStorage.setItem(storageKey, JSON.stringify(uniqueRecords));
+    }
+
+    uniqueRecords.forEach(function(record) {
       if (record && record.siteID) {
-        appendSiteHistory(record.siteID, record.result || {}, record.scanAt, false);
+        // 最後一個 true 表示僅還原畫面，不可再次保存。
+        appendSiteHistory(record.siteID, record.result || {}, record.scanAt, true);
       }
     });
   } catch (error) {
