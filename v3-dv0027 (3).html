@@ -934,7 +934,7 @@ content="智慧巡檢系統"
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.6.4";
+  "V3.6.5";
 
 
 //==================================================
@@ -1854,6 +1854,27 @@ async function startScanner() {
 
   try {
 
+    // 先完成登入狀態的版面配置，再建立 QR 辨識框。
+    // 否則首次載入會先以「掃描人員」的較大相機區計算 qrbox，
+    // 後續切成站點模式時框會被壓成扁長形；切換 NFC 後才會恢復正常。
+    const restoredSiteSession =
+      restoreSavedSession();
+
+    scanning = true;
+
+    if (restoredSiteSession) {
+      showSiteScanMode("QR");
+    } else {
+      showPersonScanMode();
+    }
+
+    // 等待兩個畫面更新週期，確保取得的是最後的相機區實際尺寸。
+    await new Promise(function(resolve) {
+      requestAnimationFrame(function() {
+        requestAnimationFrame(resolve);
+      });
+    });
+
     if (!html5QrCode) {
       html5QrCode =
         new Html5Qrcode(
@@ -1866,8 +1887,6 @@ async function startScanner() {
           }
         );
     }
-
-    scanning = true;
 
     await html5QrCode.start(
       {
@@ -1903,12 +1922,9 @@ async function startScanner() {
       onScanFailure
     );
 
-    if (restoreSavedSession()) {
-      showSiteScanMode();
+    if (restoredSiteSession) {
       startCountdown();
       processNfcLinkSite();
-    } else {
-      showPersonScanMode();
     }
 
   } catch (error) {
