@@ -541,6 +541,20 @@ content="智慧巡檢系統"
       object-fit: cover !important;
     }
 
+    /* html5-qrcode 預設會把內層 scan region 壓回串流比例，
+       導致真正的 QR 框變成扁長條；強制與外層預覽同高。 */
+    #reader__scan_region {
+      width: 100% !important;
+      height: 100% !important;
+      overflow: hidden !important;
+    }
+
+    #reader__scan_region video {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+    }
+
     .scanCorners {
       /*
        * 恢復 V3.3.4 的掃描視覺：
@@ -900,7 +914,7 @@ content="智慧巡檢系統"
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.6.0";
+  "V3.6.1";
 
 
 //==================================================
@@ -1854,7 +1868,7 @@ async function startScanner() {
             viewfinderHeight
           );
 
-          const size = Math.floor(minEdge * 0.72);
+          const size = Math.floor(minEdge * 0.80);
 
           return {
             width: size,
