@@ -541,8 +541,7 @@ content="智慧巡檢系統"
       object-fit: cover !important;
     }
 
-    /* html5-qrcode 預設會把內層 scan region 壓回串流比例，
-       導致真正的 QR 框變成扁長條；強制與外層預覽同高。 */
+    /* 相機串流維持滿版；辨識框另外由 scanCorners 統一繪製。 */
     #reader__scan_region {
       width: 100% !important;
       height: 100% !important;
@@ -555,6 +554,15 @@ content="智慧巡檢系統"
       object-fit: cover !important;
     }
 
+    /* 關閉 html5-qrcode 依視窗比例產生的內建灰色框，
+       避免 Safari 網頁版出現扁長的第二個框。 */
+    #qr-shaded-region_1,
+    #qr-shaded-region_2,
+    #qr-shaded-region_3,
+    #qr-shaded-region_4 {
+      display: none !important;
+    }
+
     .scanCorners {
       /*
        * 恢復 V3.3.4 的掃描視覺：
@@ -562,7 +570,11 @@ content="智慧巡檢系統"
        * 相機區高度仍由單頁版面控制，不增加頁面高度。
        */
       position: absolute;
-      inset: 8% 7%;
+      left: 50%;
+      top: 50%;
+      width: 0;
+      height: 0;
+      transform: translate(-50%, -50%);
       z-index: 4;
       pointer-events: none;
       background:
@@ -934,7 +946,7 @@ content="智慧巡檢系統"
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.6.5";
+  "V3.6.6";
 
 
 //==================================================
@@ -1425,6 +1437,7 @@ async function registerServiceWorker() {
 let html5QrCode = null;
 let scanning = false;
 let processing = false;
+let qrFrameSize = 0;
 
 // PERSON = 掃人員
 // SITE   = 掃站點
@@ -1433,6 +1446,24 @@ let stationInputMode = "QR";
 let nfcAbort = null;
 let lastNfcValue = "";
 let lastNfcAt = 0;
+
+// 以相機區的短邊建立固定正方形框，PWA 與 Safari 網頁版皆相同。
+function syncQrFrame() {
+  const wrap = document.getElementById("scannerWrap");
+  const frame = document.querySelector(".scanCorners");
+  if (!wrap || !frame) return 0;
+
+  const bounds = wrap.getBoundingClientRect();
+  const shortEdge = Math.min(bounds.width, bounds.height);
+  const size = Math.max(140, Math.floor(shortEdge * 0.80));
+
+  qrFrameSize = size;
+  frame.style.width = size + "px";
+  frame.style.height = size + "px";
+  return size;
+}
+
+window.addEventListener("resize", syncQrFrame);
 
 function restoreSavedSession() {
   try {
@@ -1875,6 +1906,8 @@ async function startScanner() {
       });
     });
 
+    syncQrFrame();
+
     if (!html5QrCode) {
       html5QrCode =
         new Html5Qrcode(
@@ -1902,12 +1935,11 @@ async function startScanner() {
         ) {
           // 中央正方形為真正的辨識範圍。
           // 對應畫面白色角標，集中辨識可提高 QR 掃描穩定度。
-          const minEdge = Math.min(
-            viewfinderWidth,
-            viewfinderHeight
+          const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+          const size = Math.min(
+            qrFrameSize || Math.floor(minEdge * 0.80),
+            Math.floor(minEdge * 0.80)
           );
-
-          const size = Math.floor(minEdge * 0.80);
 
           return {
             width: size,
