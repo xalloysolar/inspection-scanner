@@ -515,11 +515,12 @@ content="智慧巡檢系統"
 
     .scannerWrap {
       position: relative;
-      flex: 0 0 auto;
+      /* 恢復 V2.0.5／V3.3.4 的滿版直向相機預覽。 */
+      flex: 1 1 auto;
       width: auto;
       max-width: none;
-      min-height: 240px;
-      height: clamp(240px, 35dvh, 420px);
+      min-height: 330px;
+      height: clamp(350px, 57dvh, 680px);
       margin: 0 10px;
       overflow: hidden;
       border: 1px solid #33464f;
@@ -532,7 +533,7 @@ content="智慧巡檢系統"
     #reader video {
       width: 100% !important;
       height: 100% !important;
-      min-height: 240px;
+      min-height: 330px;
       border-radius: 8px;
     }
 
@@ -702,8 +703,8 @@ content="智慧巡檢系統"
       .systemVersion { margin-top: 2px; }
       .loginInfo { margin-top: 6px; margin-bottom: 6px; }
       #loginPerson, .loginTimerRow { padding-top: 9px; padding-bottom: 9px; }
-      .scannerWrap { height: 34dvh; min-height: 220px; }
-      #reader, #reader video { min-height: 220px; }
+      .scannerWrap { height: 52dvh; min-height: 285px; }
+      #reader, #reader video { min-height: 285px; }
       .result { min-height: 42px; margin-top: 6px; margin-bottom: 6px; padding: 8px 10px; }
       .scanHistoryTitle { padding-top: 8px; padding-bottom: 8px; }
       .hint { display: none; }
@@ -899,7 +900,7 @@ content="智慧巡檢系統"
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.5.9";
+  "V3.6.0";
 
 
 //==================================================
