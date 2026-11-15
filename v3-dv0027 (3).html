@@ -851,8 +851,8 @@ content="智慧巡檢系統"
 </div>
 
 <div id="stationModes" style="display:none; gap:8px; margin:12px 0">
-  <button id="nfcModeButton" type="button" onclick="selectStationMode('NFC')" style="flex:1; padding:14px; border:1px solid #00e6ec; border-radius:12px; background:#007f89; color:white; font-size:17px">◉ NFC 感應</button>
-  <button id="qrModeButton" type="button" onclick="selectStationMode('QR')" style="flex:1; padding:14px; border:1px solid #55727c; border-radius:12px; background:#102933; color:white; font-size:17px">▣ QR Code 掃描</button>
+  <button id="nfcModeButton" type="button" onclick="selectStationMode('NFC', true)" style="flex:1; padding:14px; border:1px solid #00e6ec; border-radius:12px; background:#007f89; color:white; font-size:17px">◉ NFC 感應</button>
+  <button id="qrModeButton" type="button" onclick="selectStationMode('QR', true)" style="flex:1; padding:14px; border:1px solid #55727c; border-radius:12px; background:#102933; color:white; font-size:17px">▣ QR Code 掃描</button>
 </div>
 <div id="nfcPanel" style="display:none; padding:26px 20px; border:1px solid #286e83; border-radius:20px; text-align:center; background:#061e2b; color:white">
   <div style="font-size:64px; color:#00e6ec">◉</div>
@@ -934,7 +934,7 @@ content="智慧巡檢系統"
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.6.8";
+  "V3.6.9";
 
 
 //==================================================
@@ -970,7 +970,23 @@ const isRestoredNavigation = Boolean(
   navigationEntry &&
   (navigationEntry.type === "reload" || navigationEntry.type === "back_forward")
 );
-const shouldAutoProcessNfc = Boolean(nfcLinkSiteID) && !isRestoredNavigation;
+
+// 只有已在掃描頁且由使用者主動切到 NFC 模式時，才允許 NFC 網址自動打卡。
+// 主畫面重開即使保留舊網址，也不會有這個本次頁面授權。
+const nfcLaunchDeviceID = String(params.get("device") || "UNKNOWN")
+  .trim()
+  .toUpperCase();
+const nfcArmSessionKey = "inspection.nfcArmed." + nfcLaunchDeviceID;
+let isNfcArmed = false;
+
+try {
+  isNfcArmed = sessionStorage.getItem(nfcArmSessionKey) === "1";
+} catch (error) {
+}
+
+const shouldAutoProcessNfc = Boolean(nfcLinkSiteID) &&
+  !isRestoredNavigation &&
+  isNfcArmed;
 
 // NFC 網址帶入的站點只允許在真正由 NFC 開啟的當次頁面使用一次。
 let pendingNfcSiteID = shouldAutoProcessNfc ? nfcLinkSiteID : "";
@@ -1551,8 +1567,25 @@ async function pauseQrCameraForNfc() {
   html5QrCode = null;
 }
 
-function selectStationMode(mode) {
+function selectStationMode(mode, userInitiated) {
   if (scanMode !== "SITE") return;
+
+  // 只有使用者親自切換 NFC，才授權本次掃描頁的 NFC 網址直接更新資料。
+  // 從主畫面或程式自動切換時不授權，避免舊網址重開後自行打卡。
+  if (userInitiated && mode === "NFC") {
+    try {
+      sessionStorage.setItem(nfcArmSessionKey, "1");
+    } catch (error) {
+    }
+  }
+
+  if (userInitiated && mode === "QR") {
+    try {
+      sessionStorage.removeItem(nfcArmSessionKey);
+    } catch (error) {
+    }
+  }
+
   stationInputMode = mode;
   if (nfcAbort) { nfcAbort.abort(); nfcAbort = null; }
   document.getElementById("scannerWrap").style.display = mode === "QR" ? "" : "none";
