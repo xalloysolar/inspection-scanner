@@ -803,12 +803,12 @@
       <button id="nfcModeButton" type="button" onclick="selectStationMode('NFC')" style="flex:1; padding:14px; border:1px solid #00e6ec; border-radius:12px; background:#007f89; color:white; font-size:17px">◉ NFC 感應</button>
       <button id="qrModeButton" type="button" onclick="selectStationMode('QR')" style="flex:1; padding:14px; border:1px solid #55727c; border-radius:12px; background:#102933; color:white; font-size:17px">▣ QR Code 掃描</button>
     </div>
-    <div id="nfcPanel" style="display:none; padding:45px 20px; border:1px solid #286e83; border-radius:20px; text-align:center; background:#061e2b; color:white">
+    <div id="nfcPanel" style="display:none; padding:26px 20px; border:1px solid #286e83; border-radius:20px; text-align:center; background:#061e2b; color:white">
       <div style="font-size:64px; color:#00e6ec">◉</div>
       <div style="font-size:24px; font-weight:bold">NFC 感應模式</div>
       <p>請將手機靠近巡檢站點的 NFC 標籤</p>
       <button id="nfcStart" type="button" onclick="startNfc()" style="padding:12px 24px; border:1px solid #00e6ec; border-radius:24px; background:#063b46; color:#00e6ec; font-size:16px">點此啟動 NFC 感應</button>
-      <p id="nfcStatus" style="color:#9fbbc8"></p>
+      <p id="nfcStatus" style="display:none; color:#9fbbc8"></p>
     </div>
     <div class="scannerWrap" id="scannerWrap">
       <div id="reader"></div>
@@ -883,7 +883,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.4.7";
+  "V3.4.8";
 
 
 //==================================================
@@ -1499,13 +1499,15 @@ async function startNfc() {
   if (scanMode !== "SITE" || stationInputMode !== "NFC") return;
   if (!('NDEFReader' in window)) {
     document.getElementById("nfcStart").style.display = "none";
-    status.innerHTML = "iPhone 不支援按鈕直接讀取 NFC。<br>請將標籤寫入站點網址；碰觸標籤後 iPhone 會自動開啟本頁並完成巡檢。";
+    status.textContent = "";
+    status.style.display = "none";
     return;
   }
   if (nfcAbort) nfcAbort.abort();
   const controller = new AbortController();
   nfcAbort = controller;
   try {
+    status.style.display = "";
     const reader = new NDEFReader();
     await reader.scan({signal: controller.signal});
     status.textContent = "等待感應中…";
