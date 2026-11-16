@@ -561,14 +561,8 @@ content="智慧巡檢系統"
        * 外框提供大範圍對準指引；中央正方形則由 qrbox 作為真正辨識區。
        * 相機區高度仍由單頁版面控制，不增加頁面高度。
        */
-      /* 固定外層引導框：以 640 × 600 預覽區為基準，為 550 × 596。 */
-      display: block;
       position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 85.9375%;
-      height: 99.3333%;
-      transform: translate(-50%, -50%);
+      inset: 8% 7%;
       z-index: 4;
       pointer-events: none;
       background:
@@ -730,14 +724,14 @@ content="智慧巡檢系統"
       .hint { display: none; }
     }
 
-    /* 單頁巡檢：相機高度固定，避免 html5-qrcode 每次依剩餘空間重算框線。 */
+    /* 單頁巡檢：將所有區塊鎖在可視高度內；相機區依剩餘空間自動縮放。 */
     #stationModes { margin: 8px 10px !important; }
     #stationModes button { padding: 10px !important; }
 
     .scannerWrap {
-      flex: 0 0 350px;
-      min-height: 350px;
-      height: 350px;
+      flex: 1 1 0;
+      min-height: 250px;
+      height: auto;
     }
 
     #reader,
@@ -746,7 +740,7 @@ content="智慧巡檢系統"
     }
 
     @media (max-height: 720px) {
-      .scannerWrap { flex-basis: 300px; min-height: 300px; height: 300px; }
+      .scannerWrap { min-height: 230px; height: auto; }
       #reader, #reader video { min-height: 0; }
       .topBar { min-height: 64px; }
       .loginInfo { margin-top: 4px; margin-bottom: 4px; }
@@ -940,7 +934,7 @@ content="智慧巡檢系統"
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.7.2";
+  "V3.6.9";
 
 
 //==================================================
@@ -1958,10 +1952,18 @@ async function startScanner() {
           viewfinderWidth,
           viewfinderHeight
         ) {
+          // 中央正方形為真正的辨識範圍。
+          // 對應畫面白色角標，集中辨識可提高 QR 掃描穩定度。
+          const minEdge = Math.min(
+            viewfinderWidth,
+            viewfinderHeight
+          );
+
+          const size = Math.floor(minEdge * 0.80);
+
           return {
-            // 以 640 × 600 預覽區為基準，固定為 515 × 350。
-            width: Math.floor(viewfinderWidth * 0.8046875),
-            height: Math.floor(viewfinderHeight * 0.5833333)
+            width: size,
+            height: size
           };
         },
       
