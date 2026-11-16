@@ -724,14 +724,14 @@ content="智慧巡檢系統"
       .hint { display: none; }
     }
 
-    /* 單頁巡檢：將所有區塊鎖在可視高度內；相機區依剩餘空間自動縮放。 */
+    /* 單頁巡檢：相機高度固定，避免 html5-qrcode 每次依剩餘空間重算框線。 */
     #stationModes { margin: 8px 10px !important; }
     #stationModes button { padding: 10px !important; }
 
     .scannerWrap {
-      flex: 1 1 0;
-      min-height: 250px;
-      height: auto;
+      flex: 0 0 350px;
+      min-height: 350px;
+      height: 350px;
     }
 
     #reader,
@@ -740,7 +740,7 @@ content="智慧巡檢系統"
     }
 
     @media (max-height: 720px) {
-      .scannerWrap { min-height: 230px; height: auto; }
+      .scannerWrap { flex-basis: 300px; min-height: 300px; height: 300px; }
       #reader, #reader video { min-height: 0; }
       .topBar { min-height: 64px; }
       .loginInfo { margin-top: 4px; margin-bottom: 4px; }
@@ -934,7 +934,7 @@ content="智慧巡檢系統"
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.6.9";
+  "V3.7.0";
 
 
 //==================================================
@@ -1952,14 +1952,12 @@ async function startScanner() {
           viewfinderWidth,
           viewfinderHeight
         ) {
-          // 中央正方形為真正的辨識範圍。
-          // 對應畫面白色角標，集中辨識可提高 QR 掃描穩定度。
-          const minEdge = Math.min(
-            viewfinderWidth,
-            viewfinderHeight
+          // 固定正方形辨識區：不依登入列、掃描紀錄或畫面高度重新縮放。
+          const size = Math.min(
+            280,
+            Math.floor(viewfinderWidth - 32),
+            Math.floor(viewfinderHeight - 32)
           );
-
-          const size = Math.floor(minEdge * 0.80);
 
           return {
             width: size,
