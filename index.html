@@ -871,7 +871,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V2.1.5";
+  "V2.0.6";
 
 
 //==================================================
@@ -2180,42 +2180,89 @@ function appendSiteHistory(
 
     }
 
-  let detailText = "掃描時間：" + timeText + "　｜　人員：" + currentPersonID;
 
-  if (currentPersonID === "PS0021") {
-    const timing = result.timing || {};
+    //================================================
+    // PS0021：顯示後端每一段執行時間
+    //================================================
+    if (showTimingDetails) {
 
-    function readNumber(value) {
-      if (value == null || String(value).trim() === "") return NaN;
-      const number = Number(value);
-      return Number.isFinite(number) && number >= 0 ? number : NaN;
+      const formatMsToSeconds =
+        function(value) {
+
+          const milliseconds =
+            Number(value);
+
+          return Number.isFinite(
+            milliseconds
+          )
+            ? (milliseconds / 1000).toFixed(2)
+            : "-";
+
+        };
+
+
+      timingDetailText =
+        "登入：" +
+        formatMsToSeconds(
+          backendTiming.sessionMs
+        ) +
+        " 秒｜站點主檔：" +
+        formatMsToSeconds(
+          backendTiming.siteDbMs
+        ) +
+        " 秒<br>" +
+        "人員主檔：" +
+        formatMsToSeconds(
+          backendTiming.personDbMs
+        ) +
+        " 秒｜今日表：" +
+        formatMsToSeconds(
+          backendTiming.todaySheetMs
+        ) +
+        " 秒｜寫入：" +
+        formatMsToSeconds(
+          backendTiming.writeMs
+        ) +
+        " 秒";
+
     }
 
-    function formatSeconds(value) {
-      return Number.isFinite(value) ? value.toFixed(2) + " 秒" : "—";
-    }
-
-    const total = readNumber(result.clientElapsedSeconds);
-    const backendMs = [
-      timing.totalMs, timing.elapsedMs, result.totalMs, result.elapsedMs
-    ].map(readNumber).find(Number.isFinite);
-    const backend = Number.isFinite(backendMs)
-      ? backendMs / 1000
-      : [timing.totalSeconds, result.totalSeconds, result.elapsedSeconds]
-          .map(readNumber).find(Number.isFinite);
-    const apiWait = Math.max(0, total - backend);
-
-    mainText += "｜總耗時：" + formatSeconds(total);
-    detailText = "後端合計：" + formatSeconds(backend) +
-      "｜API 等待：" + formatSeconds(apiWait);
   }
 
-  main.textContent = mainText;
-  content.appendChild(main);
 
-  const sub = document.createElement("div");
-  sub.className = "scanHistorySub";
-  sub.textContent = detailText;
+  main.textContent =
+    mainText;
+
+
+  content.appendChild(
+    main
+  );
+
+
+  const sub =
+    document.createElement(
+      "div"
+    );
+
+  sub.className =
+    "scanHistorySub";
+
+
+  sub.innerHTML =
+    "掃描時間：" +
+    escapeHtml(
+      timeText
+    ) +
+    "　｜　人員：" +
+    escapeHtml(
+      currentPersonID
+    ) +
+    (
+      timingDetailText
+        ? "<br>⏱ " +
+          timingDetailText
+        : ""
+    );
 
 
   content.appendChild(
