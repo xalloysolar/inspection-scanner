@@ -452,9 +452,72 @@
     letter-spacing: 0.4px;
   }
 
+    .systemVersion.isVersionAdmin {
+      cursor: pointer;
+      color: var(--cyan);
+      padding: 4px 6px;
+      border-radius: 7px;
+      background: rgba(24, 222, 239, 0.08);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .versionModal {
+      display: none;
+      position: fixed;
+      top: max(190px, 21svh);
+      left: 50%;
+      z-index: 300;
+      width: min(calc(100vw - 44px), 560px);
+      transform: translateX(-50%);
+      padding: 16px;
+      border: 2px solid var(--cyan);
+      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(5, 28, 41, 0.98), rgba(5, 17, 26, 0.98));
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55), 0 0 18px rgba(24, 222, 239, 0.22);
+      box-sizing: border-box;
+    }
+
+    .versionModal.show { display: block; }
+
+    .versionModalTitle {
+      margin: 0 0 12px;
+      color: var(--text);
+      font-size: clamp(21px, 6.4vw, 30px);
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .versionChoices {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .versionChoice {
+      min-height: 98px;
+      padding: 11px 6px;
+      border: 2px solid var(--cyan);
+      border-radius: 17px;
+      color: var(--text);
+      background: rgba(5, 18, 27, 0.92);
+      font: inherit;
+      font-size: clamp(17px, 5vw, 24px);
+      font-weight: 900;
+      line-height: 1.32;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .versionChoice.active {
+      color: #072311;
+      border-color: #63ff90;
+      background: linear-gradient(135deg, #25e965, #6dff80);
+      box-shadow: 0 0 16px rgba(67, 244, 126, 0.62);
+    }
+
     .loginInfo {
       display: none;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr) auto auto;
       align-items: center;
       margin: 8px 10px;
       padding: 0;
@@ -492,6 +555,26 @@
       background: var(--green);
       color: #05210f;
     }
+
+    .adminEndButton {
+      display: none;
+      align-self: stretch;
+      align-items: center;
+      margin: 6px 0;
+      padding: 0 10px;
+      border: 1px solid rgba(255, 124, 124, 0.80);
+      border-radius: 8px;
+      color: #ffd5d5;
+      background: rgba(117, 20, 25, 0.78);
+      font: inherit;
+      font-size: clamp(12px, 3.4vw, 15px);
+      font-weight: 900;
+      white-space: nowrap;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .adminEndButton.show { display: inline-flex; }
 
     .loginTimerRow {
       padding: 13px 12px;
@@ -789,6 +872,12 @@
       class="loginInfo"
     >
       <div id="loginPerson"></div>
+      <button
+        id="adminEndButton"
+        class="adminEndButton"
+        type="button"
+        onclick="endAdminSession()"
+      >結束</button>
       <div class="loginTimerRow">
         剩餘
         <span
@@ -862,6 +951,24 @@
 
   </div>
 
+  <div
+    id="versionModal"
+    class="versionModal"
+    role="dialog"
+    aria-modal="true"
+    aria-label="版本管理"
+  >
+    <div class="versionModalTitle">版本管理</div>
+    <div class="versionChoices">
+      <button id="stableVersionButton" class="versionChoice" type="button">
+        穩定版<br><span id="stableVersionText">V2.0.5</span>
+      </button>
+      <button id="testVersionButton" class="versionChoice" type="button">
+        測試版<br><span id="testVersionText">V3.0.2</span>
+      </button>
+    </div>
+  </div>
+
 <script>
 //==================================================
 // 智慧巡檢系統版本
@@ -872,6 +979,23 @@
 //==================================================
 const SYSTEM_VERSION =
   "V2.0.5";
+
+//==================================================
+// 版本切換設定
+// index.html 為現場穩定版；index3 為測試版。
+// 只有 PS0021 登入後才可開啟切換面板。
+//==================================================
+const VERSION_SWITCHER = {
+  current: "stable",
+  stable: {
+    version: "V2.0.5",
+    page: "./index.html"
+  },
+  test: {
+    version: "V3.0.2",
+    page: "./index3"
+  }
+};
 
 
 //==================================================
@@ -966,6 +1090,18 @@ const deviceBox =
 
 const systemVersionBox =
   document.getElementById("systemVersion");
+
+const versionModal =
+  document.getElementById("versionModal");
+
+const stableVersionButton =
+  document.getElementById("stableVersionButton");
+
+const testVersionButton =
+  document.getElementById("testVersionButton");
+
+const adminEndButton =
+  document.getElementById("adminEndButton");
 
 const resultBox =
   document.getElementById("result");
@@ -1355,6 +1491,101 @@ let lastDecodedAt = 0;
 //==================================================
 systemVersionBox.textContent =
   SYSTEM_VERSION;
+
+
+//==================================================
+// 版本管理（僅 PS0021）
+//==================================================
+function isVersionAdmin() {
+  return currentPersonID === "PS0021";
+}
+
+function updateVersionControl() {
+  const canSwitch = isVersionAdmin();
+
+  systemVersionBox.textContent =
+    SYSTEM_VERSION + (canSwitch ? " ⚙" : "");
+
+  systemVersionBox.classList.toggle(
+    "isVersionAdmin",
+    canSwitch
+  );
+
+  systemVersionBox.onclick =
+    canSwitch
+      ? toggleVersionModal
+      : null;
+
+  adminEndButton.classList.toggle(
+    "show",
+    canSwitch
+  );
+
+  if (!canSwitch) {
+    versionModal.classList.remove("show");
+    return;
+  }
+
+  stableVersionButton.classList.toggle(
+    "active",
+    VERSION_SWITCHER.current === "stable"
+  );
+
+  testVersionButton.classList.toggle(
+    "active",
+    VERSION_SWITCHER.current === "test"
+  );
+}
+
+function toggleVersionModal() {
+  if (!isVersionAdmin()) return;
+
+  versionModal.classList.toggle("show");
+}
+
+function switchVersion(target) {
+  if (!isVersionAdmin() || !VERSION_SWITCHER[target]) return;
+
+  if (target === VERSION_SWITCHER.current) {
+    versionModal.classList.remove("show");
+    return;
+  }
+
+  const targetUrl = new URL(
+    VERSION_SWITCHER[target].page,
+    window.location.href
+  );
+
+  const currentParams = new URLSearchParams(
+    window.location.search
+  );
+
+  currentParams.forEach(function(value, key) {
+    targetUrl.searchParams.set(key, value);
+  });
+
+  if (deviceID) {
+    targetUrl.searchParams.set("device", deviceID);
+  }
+
+  targetUrl.searchParams.set("ts", Date.now());
+  window.location.replace(targetUrl.toString());
+}
+
+function endAdminSession() {
+  if (!isVersionAdmin()) return;
+
+  versionModal.classList.remove("show");
+  expireCurrentSession();
+}
+
+stableVersionButton.addEventListener("click", function() {
+  switchVersion("stable");
+});
+
+testVersionButton.addEventListener("click", function() {
+  switchVersion("test");
+});
 
 
 if (deviceID) {
@@ -1783,6 +2014,7 @@ async function handlePersonScan(
   processing = false;
   
   showSiteScanMode();
+  updateVersionControl();
   startCountdown();
 
   } catch (error) {
@@ -2489,6 +2721,8 @@ function expireCurrentSession() {
   currentPersonIsAdmin = false;
   sessionExpireTime = null;
   processing = false;
+
+  updateVersionControl();
 
   
   // 清除本次登入的畫面掃描紀錄
