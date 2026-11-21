@@ -961,10 +961,10 @@
     <div class="versionModalTitle">版本管理</div>
     <div class="versionChoices">
       <button id="stableVersionButton" class="versionChoice" type="button">
-        穩定版<br><span id="stableVersionText">V2.0.5</span>
+        穩定版<br><span id="stableVersionText">V2.0.6</span>
       </button>
       <button id="testVersionButton" class="versionChoice" type="button">
-        測試版<br><span id="testVersionText">V3.0.2</span>
+        測試版<br><span id="testVersionText">V3.0.3</span>
       </button>
     </div>
   </div>
@@ -978,7 +978,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.0.2";
+  "V3.0.3";
 
 //==================================================
 // 版本切換設定
@@ -988,11 +988,11 @@ const SYSTEM_VERSION =
 const VERSION_SWITCHER = {
   current: "test",
   stable: {
-    version: "V2.0.5",
+    version: "V2.0.6",
     page: "./index.html"
   },
   test: {
-    version: "V3.0.2",
+    version: "V3.0.3",
     page: "./index3"
   }
 };
@@ -1572,11 +1572,42 @@ function switchVersion(target) {
   window.location.replace(targetUrl.toString());
 }
 
-function endAdminSession() {
+async function endAdminSession() {
   if (!isVersionAdmin()) return;
 
-  versionModal.classList.remove("show");
-  expireCurrentSession();
+  adminEndButton.disabled = true;
+
+  try {
+    const result =
+      await jsonpRequest(
+        {
+          api: "LOGOUT",
+          user: currentPersonID,
+          device: deviceID
+        },
+        10000
+      );
+
+    if (!result || result.success !== true) {
+      throw new Error(
+        result && result.message
+          ? result.message
+          : "後端結束登入失敗"
+      );
+    }
+
+    versionModal.classList.remove("show");
+    expireCurrentSession();
+
+  } catch (error) {
+    resultBox.className = "result error";
+    resultBox.textContent =
+      "❌ 無法結束登入：" +
+      (error && error.message ? error.message : String(error));
+
+  } finally {
+    adminEndButton.disabled = false;
+  }
 }
 
 stableVersionButton.addEventListener("click", function() {
