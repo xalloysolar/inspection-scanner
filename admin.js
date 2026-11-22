@@ -1,6 +1,7 @@
 /*
- * 智慧巡檢共用管理員效能監測模組 V1.0.0
- * 只顯示各版本提供的監測資料，不控制相機、登入、打卡或版本切換。
+ * 智慧巡檢共用管理員效能監測模組 V1.0.1
+ * V1.0.1：新增 V2／V3 管理員版本選單名稱同步（僅顯示文字）。
+ * 不控制相機、登入、打卡、版本切換及結束登入。
  * 重要：呼叫 mount 前，必須先由原系統的後端驗證 PS0021 與有效 Session。
  * 本模組只控制前端顯示，不能取代後端權限驗證。
  */
@@ -8,9 +9,14 @@
   'use strict';
   if (global.InspectionAdminMonitor) return;
 
-  const VERSION = '1.0.0';
+  const VERSION = '1.0.1';
   const STYLE_ID = 'inspection-admin-monitor-style';
   const PANEL_ID = 'inspection-admin-monitor-panel';
+
+  // 共用版本選單的顯示名稱；將來發布 V3 新版，只需修改這個值。
+  // 不會更改各版本 HTML 內的 SYSTEM_VERSION 或 VERSION_SWITCHER。
+  const LATEST_TEST_VERSION = 'V3.0.8';
+
   let panel = null;
   let stats = { count: 0, success: 0, failure: 0, last: null, totalSum: 0 };
 
@@ -56,7 +62,6 @@
 
   function mount(options) {
     options = options || {};
-    // 此 authorized 參數必須由原系統「後端已確認」管理員身分後傳入。
     if (options.authorized !== true) { unmount(); return false; }
     const parent = typeof options.container === 'string'
       ? document.querySelector(options.container)
@@ -108,6 +113,30 @@
   function unmount() {
     if (panel) panel.remove();
     panel = null;
+  }
+
+  // V1.0.1：只同步選單的顯示文字，不更改原本切換事件及選擇狀態。
+  // updateVersionControl() 可能再次寫回舊版號，因此監看該欄位的文字變動。
+  function syncTestVersionLabel() {
+    const label = document.getElementById('testVersionText');
+    if (!label) return;
+    if (label.textContent !== LATEST_TEST_VERSION) {
+      label.textContent = LATEST_TEST_VERSION;
+    }
+  }
+
+  function installVersionLabelSync() {
+    const label = document.getElementById('testVersionText');
+    if (!label) return;
+    syncTestVersionLabel();
+    const observer = new MutationObserver(syncTestVersionLabel);
+    observer.observe(label, { childList: true, characterData: true, subtree: true });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', installVersionLabelSync, { once: true });
+  } else {
+    installVersionLabelSync();
   }
 
   global.InspectionAdminMonitor = Object.freeze({ version: VERSION, mount, record, reset, unmount });
