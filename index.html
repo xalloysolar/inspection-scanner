@@ -961,10 +961,10 @@
     <div class="versionModalTitle">版本管理</div>
     <div class="versionChoices">
       <button id="stableVersionButton" class="versionChoice" type="button">
-        穩定版<br><span id="stableVersionText">V2.0.7</span>
+        穩定版<br><span id="stableVersionText">V2.0.8</span>
       </button>
       <button id="testVersionButton" class="versionChoice" type="button">
-        測試版<br><span id="testVersionText">V3.0.3</span>
+        測試版<br><span id="testVersionText">V3.0.6</span>
       </button>
     </div>
   </div>
@@ -979,7 +979,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V2.0.7";
+  "V2.0.8";
 
 //==================================================
 // 版本切換設定
@@ -989,11 +989,11 @@ const SYSTEM_VERSION =
 const VERSION_SWITCHER = {
   current: "stable",
   stable: {
-    version: "V2.0.7",
+    version: "V2.0.8",
     page: "./index.html"
   },
   test: {
-    version: "V3.0.3",
+    version: "V3.0.6",
     page: "./index3.html"
   }
 };
@@ -1495,7 +1495,7 @@ systemVersionBox.textContent =
 
 
 //==================================================
-// 管理員共用效能監測橋接 V2.0.7
+// 管理員共用效能監測橋接 V2.0.8
 // 使用原版登入驗證結果；只附加區塊，不接管相機與打卡。
 //==================================================
 function updateAdminMonitor() {
@@ -1549,6 +1549,9 @@ function isVersionAdmin() {
 
 function updateVersionControl() {
   const canSwitch = isVersionAdmin();
+  // 版本選單由同一份設定產生，避免 HTML 靜態文字顯示舊版。
+  document.getElementById("stableVersionText").textContent = VERSION_SWITCHER.stable.version;
+  document.getElementById("testVersionText").textContent = VERSION_SWITCHER.test.version;
 
   systemVersionBox.textContent =
     SYSTEM_VERSION + (canSwitch ? " ⚙" : "");
