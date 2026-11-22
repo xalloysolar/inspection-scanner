@@ -961,14 +961,15 @@
     <div class="versionModalTitle">版本管理</div>
     <div class="versionChoices">
       <button id="stableVersionButton" class="versionChoice" type="button">
-        穩定版<br><span id="stableVersionText">V2.0.6</span>
+        穩定版<br><span id="stableVersionText">V2.0.7</span>
       </button>
       <button id="testVersionButton" class="versionChoice" type="button">
-        測試版<br><span id="testVersionText">V3.0.3</span>
+        測試版<br><span id="testVersionText">V3.0.4</span>
       </button>
     </div>
   </div>
 
+<script src="./admin.js?v=1.0.0"></script>
 <script>
 //==================================================
 // 智慧巡檢系統版本
@@ -978,7 +979,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.0.3";
+  "V3.0.4";
 
 //==================================================
 // 版本切換設定
@@ -988,12 +989,12 @@ const SYSTEM_VERSION =
 const VERSION_SWITCHER = {
   current: "test",
   stable: {
-    version: "V2.0.6",
+    version: "V2.0.7",
     page: "./index.html"
   },
   test: {
-    version: "V3.0.3",
-    page: "./index3"
+    version: "V3.0.4",
+    page: "./index3.html"
   }
 };
 
@@ -1492,6 +1493,52 @@ let lastDecodedAt = 0;
 systemVersionBox.textContent =
   SYSTEM_VERSION;
 
+
+//==================================================
+// 管理員共用效能監測橋接 V3.0.4
+// 使用原版登入驗證結果；只附加區塊，不接管相機與打卡。
+//==================================================
+function updateAdminMonitor() {
+  const monitor = window.InspectionAdminMonitor;
+  if (!monitor) return;
+
+  if (currentPersonID === "PS0021" &&
+      currentPersonIsAdmin === true &&
+      sessionExpireTime instanceof Date &&
+      Number.isFinite(sessionExpireTime.getTime()) &&
+      Date.now() < sessionExpireTime.getTime()) {
+    if (!document.getElementById("inspection-admin-monitor-panel")) {
+      monitor.mount({authorized:true, container:resultBox.parentNode});
+    }
+  } else {
+    monitor.unmount();
+    monitor.reset();
+  }
+}
+
+function sendAdminMonitorResult(siteID, success, payload, elapsedMs, message) {
+  const monitor = window.InspectionAdminMonitor;
+  if (!monitor || currentPersonID !== "PS0021" ||
+      currentPersonIsAdmin !== true ||
+      !document.getElementById("inspection-admin-monitor-panel")) return;
+
+  const t = payload && payload.timing && typeof payload.timing === "object"
+    ? payload.timing : {};
+  const fields = ["sessionMs", "siteDbMs", "personDbMs", "todaySheetMs", "writeMs"];
+  const reported = fields.map(k => Number(t[k]));
+  const backendMs = reported.every(n => Number.isFinite(n) && n >= 0)
+    ? reported.reduce((a,b) => a+b, 0) : null;
+
+  // totalMs 表示此次 SITE API 從發送到回應/逾時的耗時。
+  // API等待為往返耗時扣除已回報後端分段耗時的估算，非單獨量測的網路延遲。
+  monitor.record({
+    success:success,
+    totalMs:elapsedMs,
+    backendMs:backendMs,
+    apiWaitMs:backendMs === null ? null : Math.max(0, elapsedMs-backendMs),
+    message:(siteID || "") + " " + (message || (success ? "成功" : "失敗"))
+  });
+}
 
 //==================================================
 // 版本管理（僅 PS0021）
@@ -2046,6 +2093,7 @@ async function handlePersonScan(
   
   showSiteScanMode();
   updateVersionControl();
+  updateAdminMonitor();
   startCountdown();
 
   } catch (error) {
@@ -2141,12 +2189,12 @@ async function handleSiteScan(
     "<br>正在更新巡檢資料...";
 
 
+  const siteRequestStartedAt = performance.now();
   try {
 
     //================================================
   // 5. 呼叫 Apps Script 更新站點
   //================================================
-    const siteRequestStartedAt = performance.now();
 
     const result =
       await jsonpRequest(
@@ -2162,8 +2210,10 @@ async function handleSiteScan(
 
     // API 若未提供後端 totalSeconds，管理員畫面就以本次 API
     // 實際往返時間補上，確保掃描紀錄仍能顯示總耗時。
-    result.clientElapsedSeconds =
-      (performance.now() - siteRequestStartedAt) / 1000;
+    if (result && typeof result === "object") {
+      result.clientElapsedSeconds =
+        (performance.now() - siteRequestStartedAt) / 1000;
+    }
 
 
     if (
@@ -2192,6 +2242,10 @@ async function handleSiteScan(
     appendSiteHistory(
       siteID,
       result
+    );
+    sendAdminMonitorResult(
+      siteID, true, result,
+      performance.now() - siteRequestStartedAt, "打卡成功"
     );
 
 
@@ -2238,6 +2292,11 @@ async function handleSiteScan(
 
   } catch (error) {
 
+    sendAdminMonitorResult(
+      siteID, false, null,
+      performance.now() - siteRequestStartedAt,
+      "打卡失敗：" + (error && error.message ? error.message : String(error))
+    );
     console.error(
       "站點更新失敗：",
       error
@@ -2754,6 +2813,7 @@ function expireCurrentSession() {
   processing = false;
 
   updateVersionControl();
+  updateAdminMonitor();
 
   
   // 清除本次登入的畫面掃描紀錄
