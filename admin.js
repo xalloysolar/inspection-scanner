@@ -1,6 +1,7 @@
 /*
- * 智慧巡檢共用管理員效能監測模組 V1.0.1
- * V1.0.1：新增 V2／V3 管理員版本選單名稱同步（僅顯示文字）。
+ * 智慧巡檢共用管理員效能監測模組 V1.0.2
+ * V1.0.2：管理員開啟版本選單時，自動讀取 index.html 與 index3.html 的 SYSTEM_VERSION。
+ * 不必再手動維護 V2／V3 選單名稱；不修改各 HTML 的原始版本設定。
  * 不控制相機、登入、打卡、版本切換及結束登入。
  * 重要：呼叫 mount 前，必須先由原系統的後端驗證 PS0021 與有效 Session。
  * 本模組只控制前端顯示，不能取代後端權限驗證。
@@ -9,13 +10,17 @@
   'use strict';
   if (global.InspectionAdminMonitor) return;
 
-  const VERSION = '1.0.1';
+  const VERSION = '1.0.2';
   const STYLE_ID = 'inspection-admin-monitor-style';
   const PANEL_ID = 'inspection-admin-monitor-panel';
 
-  // 共用版本選單的顯示名稱；將來發布 V3 新版，只需修改這個值。
-  // 不會更改各版本 HTML 內的 SYSTEM_VERSION 或 VERSION_SWITCHER。
-  const LATEST_TEST_VERSION = 'V3.0.8';
+  // 版本由各 HTML 的 SYSTEM_VERSION 自動取得，不能寫死在 admin.js。
+  const VERSION_FILES = Object.freeze({
+    stable: './index.html',
+    test: './index3.html'
+  });
+  let latestVersions = null;
+  let versionRequestId = 0;
 
   let panel = null;
   let stats = { count: 0, success: 0, failure: 0, last: null, totalSum: 0 };
@@ -115,22 +120,89 @@
     panel = null;
   }
 
-  // V1.0.1：只同步選單的顯示文字，不更改原本切換事件及選擇狀態。
-  // updateVersionControl() 可能再次寫回舊版號，因此監看該欄位的文字變動。
-  function syncTestVersionLabel() {
-    const label = document.getElementById('testVersionText');
-    if (!label) return;
-    if (label.textContent !== LATEST_TEST_VERSION) {
-      label.textContent = LATEST_TEST_VERSION;
+  // 僅在原版管理員選單確實開啟、且原版授權判斷通過時執行。
+  // 這只是顯示層功能；不能取代 GAS 後端的管理員權限驗證。
+  function isAdminModalOpen() {
+    const modal = document.getElementById('versionModal');
+    return !!(
+      modal && modal.classList.contains('show') &&
+      typeof global.isVersionAdmin === 'function' &&
+      global.isVersionAdmin() === true
+    );
+  }
+
+  // 只改按鈕內的版本文字；不動按鈕事件、頁面網址或原本狀態。
+  function renderVersionLabels() {
+    if (!latestVersions || !isAdminModalOpen()) return;
+    const stable = document.getElementById('stableVersionText');
+    const test = document.getElementById('testVersionText');
+    if (stable && stable.textContent !== latestVersions.stable) {
+      stable.textContent = latestVersions.stable;
+    }
+    if (test && test.textContent !== latestVersions.test) {
+      test.textContent = latestVersions.test;
     }
   }
 
+  function readHtmlVersion(path) {
+    const url = new URL(path, document.baseURI);
+    // 用額外查詢參數降低 GitHub Pages / 瀏覽器沿用舊快取的機率。
+    url.searchParams.set('_version_check', String(Date.now()));
+    return fetch(url.toString(), { cache: 'no-store' })
+      .then(function(response) {
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        return response.text();
+      })
+      .then(function(html) {
+        const match = html.match(
+          /\b(?:const|let|var)\s+SYSTEM_VERSION\s*=\s*['"](V\d+\.\d+\.\d+)['"]/
+        );
+        if (!match) throw new Error('找不到 SYSTEM_VERSION：' + path);
+        return match[1];
+      });
+  }
+
+  function refreshVersions() {
+    if (!isAdminModalOpen()) return;
+    const requestId = ++versionRequestId;
+    Promise.all([
+      readHtmlVersion(VERSION_FILES.stable),
+      readHtmlVersion(VERSION_FILES.test)
+    ]).then(function(versions) {
+      if (requestId !== versionRequestId) return;
+      latestVersions = { stable: versions[0], test: versions[1] };
+      renderVersionLabels();
+    }).catch(function(error) {
+      // 讀取失敗時保留既有按鈕名稱，不干擾版本切換。
+      console.warn('[admin.js V1.0.2] 無法取得版本名稱：', error);
+      renderVersionLabels();
+    });
+  }
+
   function installVersionLabelSync() {
-    const label = document.getElementById('testVersionText');
-    if (!label) return;
-    syncTestVersionLabel();
-    const observer = new MutationObserver(syncTestVersionLabel);
-    observer.observe(label, { childList: true, characterData: true, subtree: true });
+    const modal = document.getElementById('versionModal');
+    const stable = document.getElementById('stableVersionText');
+    const test = document.getElementById('testVersionText');
+    if (!modal || !stable || !test) return;
+
+    // 原版 toggleVersionModal() 切換 show 時觸發，無須修改 V2/V3。
+    const modalObserver = new MutationObserver(function() {
+      if (isAdminModalOpen()) {
+        renderVersionLabels();
+        refreshVersions();
+      } else {
+        versionRequestId++; // 已關閉的請求結果不應改動畫面
+      }
+    });
+    modalObserver.observe(modal, { attributes: true, attributeFilter: ['class'] });
+
+    // 原版 updateVersionControl() 若重寫版本文字，恢復剛抓到的名稱。
+    const labelObserver = new MutationObserver(renderVersionLabels);
+    [stable, test].forEach(function(node) {
+      labelObserver.observe(node, { childList: true, characterData: true, subtree: true });
+    });
+
+    if (isAdminModalOpen()) refreshVersions();
   }
 
   if (document.readyState === 'loading') {
