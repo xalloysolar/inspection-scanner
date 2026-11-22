@@ -990,7 +990,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.0.7";
+  "V3.0.8";
 
 //==================================================
 // 版本切換設定
@@ -1004,15 +1004,21 @@ const VERSION_SWITCHER = {
     page: "./index.html"
   },
   test: {
-    version: "V3.0.7",
+    version: "V3.0.8",
     page: "./index3.html"
   }
 };
 
 
 //==================================================
-// Apps Script Web App
+// V3.0.8｜Apps Script API 分流
+// LOGIN／LOGOUT 由 V2 正式 GAS 統一管理 DV0027 Session。
+// SITE 由 V3 測試 GAS 寫入共用正式巡檢表。
+// 不影響 index.html（V2 穩定版）。
 //==================================================
+const SESSION_WEB_APP_URL =
+  "https://script.google.com/macros/s/AKfycbx9ZurilzKvOXetrY_EJNZ5HDcx063AfG-mGRwu2DHjoltfowrGdFAigs93LD8JA4gZ/exec";
+
 const WEB_APP_URL =
   "https://script.google.com/macros/s/AKfycbxILb_Mi5jHSwcY720Xl4ZsdeiG0adIwl3tm0VaJhd8p0ez93MQdGmvWqLzi4Rwk_Mb/exec";
 
@@ -1804,8 +1810,17 @@ function jsonpRequest(
         callbackName
       );
 
+      // V3.0.8：只有登入與結束交給 V2；站點打卡留在 V3。
+      const apiType = String(
+        (requestParams || {}).api || ""
+      ).trim().toUpperCase();
+      const requestUrl =
+        (apiType === "LOGIN" || apiType === "LOGOUT")
+          ? SESSION_WEB_APP_URL
+          : WEB_APP_URL;
+
       script.src =
-        WEB_APP_URL +
+        requestUrl +
         "?" +
         query.toString();
 
