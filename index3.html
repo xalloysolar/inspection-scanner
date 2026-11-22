@@ -748,7 +748,18 @@
     .scanHistory.expanded .scanHistoryItem { display: flex; }
     .scanHistoryIcon { color: var(--cyan); font-size: 21px; }
     .scanHistoryMain { color: #f4f7f8; font-size: 16px; }
-    .scanHistorySub { color: var(--muted); font-size: 12px; }
+    /* V3.0.5：掃描紀錄僅保留一行，窄螢幕避免換行。 */
+    .scanHistoryItem { align-items: center; gap: 7px; padding: 9px 9px; min-width: 0; }
+    .scanHistoryIcon { margin-top: 0; font-size: 18px; }
+    .scanHistoryContent { flex: 1; min-width: 0; }
+    .scanHistoryMain {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-break: normal;
+      font-size: clamp(11px, 3.25vw, 16px);
+      line-height: 1.4;
+    }
 
     .hint {
       margin: 0 12px 12px;
@@ -964,7 +975,7 @@
         穩定版<br><span id="stableVersionText">V2.0.7</span>
       </button>
       <button id="testVersionButton" class="versionChoice" type="button">
-        測試版<br><span id="testVersionText">V3.0.4</span>
+        測試版<br><span id="testVersionText">V3.0.5</span>
       </button>
     </div>
   </div>
@@ -979,7 +990,7 @@
 //.0：修正錯誤、速度優化等小修改
 //==================================================
 const SYSTEM_VERSION =
-  "V3.0.4";
+  "V3.0.5";
 
 //==================================================
 // 版本切換設定
@@ -993,7 +1004,7 @@ const VERSION_SWITCHER = {
     page: "./index.html"
   },
   test: {
-    version: "V3.0.4",
+    version: "V3.0.5",
     page: "./index3.html"
   }
 };
@@ -1495,7 +1506,7 @@ systemVersionBox.textContent =
 
 
 //==================================================
-// 管理員共用效能監測橋接 V3.0.4
+// 管理員共用效能監測橋接 V3.0.5
 // 使用原版登入驗證結果；只附加區塊，不接管相機與打卡。
 //==================================================
 function updateAdminMonitor() {
@@ -2344,268 +2355,61 @@ function clearSiteScanHistory() {
   }
 }
 //==================================================
-// 9-1. 新增一筆站點掃描紀錄
-//
-// 顯示方式：
-// 📋 ST0001｜站點名稱｜總耗時：7.36 秒（僅管理員）
-//    一般人員維持：掃描時間｜人員
-//  ST0053｜沉降槽PT9｜總耗時：13.75 秒
-//掃描時間：23:53:00｜人員：PS0021
-//⏱ 登入：0.10 秒｜站點主檔：2.40 秒
-// 人員主檔：0.80 秒｜今日表：9.80 秒｜寫入：0.50 秒
-//
-// 每成功一筆，就 append 到最下方。
+// 9-1. 新增一筆站點掃描紀錄（V3.0.5）
+// 單行顯示：📋 ST0001｜沖身洗眼器01｜總耗時：6.28 秒
+// 不顯示掃描時間、人員與後端分段明細。
+// 保留原本管理員才顯示總耗時的規則。
 //==================================================
-function appendSiteHistory(
-  siteID,
-  result
-  ) {
-
+function appendSiteHistory(siteID, result) {
   scannedSiteCount += 1;
+  scanHistory.classList.add("show");
+  scanHistoryCount.textContent = String(scannedSiteCount);
 
-  scanHistory.classList.add(
-    "show"
-  );
+  const item = document.createElement("div");
+  item.className = "scanHistoryItem";
 
-  scanHistoryCount.textContent =
-    String(
-      scannedSiteCount
-    );
+  const icon = document.createElement("div");
+  icon.className = "scanHistoryIcon";
+  icon.textContent = "📋";
 
+  const content = document.createElement("div");
+  content.className = "scanHistoryContent";
 
-  const item =
-    document.createElement(
-      "div"
-    );
-
-  item.className =
-    "scanHistoryItem";
-
-
-  const icon =
-    document.createElement(
-      "div"
-    );
-
-  icon.className =
-    "scanHistoryIcon";
-
-  icon.textContent =
-    "📋";
-
-
-  const content =
-    document.createElement(
-      "div"
-    );
-
-  content.className =
-    "scanHistoryContent";
-
-
-  const siteName =
-    String(
-      result &&
-      result.siteName
-        ? result.siteName
-        : ""
-    ).trim();
-
-
-  const now =
-    new Date();
-
-  const timeText =
-    String(
-      now.getHours()
-    ).padStart(2, "0") +
-    ":" +
-    String(
-      now.getMinutes()
-    ).padStart(2, "0") +
-    ":" +
-    String(
-      now.getSeconds()
-    ).padStart(2, "0");
-
-
-  const main =
-    document.createElement(
-      "div"
-    );
-
-  main.className =
-    "scanHistoryMain";
-
-
-  let mainText =
-    siteID +
-    (
-      siteName
-        ? "｜" + siteName
-        : ""
-    );
-
-
-  // 僅 PS0021 顯示後端分段時間
-  const showTimingDetails =
-    currentPersonID === "PS0021";
-
-  let timingDetailText = "";
-
+  const siteName = String(result && result.siteName ? result.siteName : "").trim();
+  let mainText = siteID + (siteName ? "｜" + siteName : "");
 
   if (currentPersonIsAdmin) {
-
-    const backendTiming =
-      result &&
-      result.timing
-        ? result.timing
-        : {};
-
-
-    const secondsValue =
-      result && (
-        result.totalSeconds ||
-        result.elapsedSeconds ||
-        backendTiming.totalSeconds ||
-        result.clientElapsedSeconds
-      );
-
-
-    const millisecondsValue =
-      result && (
-        result.totalMs ||
-        result.elapsedMs ||
-        backendTiming.totalMs ||
-        backendTiming.elapsedMs
-      );
-
-
-    const totalSeconds =
-      Number.isFinite(
-        Number(secondsValue)
-      )
-        ? Number(secondsValue)
-        : Number(millisecondsValue) / 1000;
-
-
-    if (
-      Number.isFinite(
-        totalSeconds
-      )
-    ) {
-
-      mainText +=
-        "｜總耗時：" +
-        totalSeconds.toFixed(2) +
-        " 秒";
-
+    const backendTiming = result && result.timing ? result.timing : {};
+    const secondsValue = result && (
+      result.totalSeconds ||
+      result.elapsedSeconds ||
+      backendTiming.totalSeconds ||
+      result.clientElapsedSeconds
+    );
+    const millisecondsValue = result && (
+      result.totalMs ||
+      result.elapsedMs ||
+      backendTiming.totalMs ||
+      backendTiming.elapsedMs
+    );
+    const totalSeconds = Number.isFinite(Number(secondsValue))
+      ? Number(secondsValue)
+      : Number(millisecondsValue) / 1000;
+    if (Number.isFinite(totalSeconds)) {
+      mainText += "｜總耗時：" + totalSeconds.toFixed(2) + " 秒";
     }
-
-
-    //================================================
-    // PS0021：顯示後端每一段執行時間
-    //================================================
-    if (showTimingDetails) {
-
-      const formatMsToSeconds =
-        function(value) {
-
-          const milliseconds =
-            Number(value);
-
-          return Number.isFinite(
-            milliseconds
-          )
-            ? (milliseconds / 1000).toFixed(2)
-            : "-";
-
-        };
-
-
-      timingDetailText =
-        "登入：" +
-        formatMsToSeconds(
-          backendTiming.sessionMs
-        ) +
-        " 秒｜站點主檔：" +
-        formatMsToSeconds(
-          backendTiming.siteDbMs
-        ) +
-        " 秒<br>" +
-        "人員主檔：" +
-        formatMsToSeconds(
-          backendTiming.personDbMs
-        ) +
-        " 秒｜今日表：" +
-        formatMsToSeconds(
-          backendTiming.todaySheetMs
-        ) +
-        " 秒｜寫入：" +
-        formatMsToSeconds(
-          backendTiming.writeMs
-        ) +
-        " 秒";
-
-    }
-
   }
 
+  const main = document.createElement("div");
+  main.className = "scanHistoryMain";
+  main.textContent = mainText;
+  content.appendChild(main);
 
-  main.textContent =
-    mainText;
+  item.appendChild(icon);
+  item.appendChild(content);
 
-
-  content.appendChild(
-    main
-  );
-
-
-  const sub =
-    document.createElement(
-      "div"
-    );
-
-  sub.className =
-    "scanHistorySub";
-
-
-  sub.innerHTML =
-    "掃描時間：" +
-    escapeHtml(
-      timeText
-    ) +
-    "　｜　人員：" +
-    escapeHtml(
-      currentPersonID
-    ) +
-    (
-      timingDetailText
-        ? "<br>⏱ " +
-          timingDetailText
-        : ""
-    );
-
-
-  content.appendChild(
-    sub
-  );
-
-
-  item.appendChild(
-    icon
-  );
-
-  item.appendChild(
-    content
-  );
-
-
-  // 新掃描的站點插入最上方
-  scanHistoryList.prepend(
-    item
-  );
-
+  // 新掃描的站點插入最上方，展開可查看其餘紀錄。
+  scanHistoryList.prepend(item);
 }
 
 //==================================================
